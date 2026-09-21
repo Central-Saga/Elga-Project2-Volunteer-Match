@@ -1,0 +1,116 @@
+<?php
+
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CampusProfileController;
+use App\Http\Controllers\Api\NgoProfileController;
+use App\Http\Controllers\Api\StudentProfileController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\NgoProjectController;
+use App\Http\Controllers\NgoProjectSubmissionController;
+use App\Http\Controllers\AdminProjectReviewController;
+use App\Http\Controllers\StudentProjectController;
+use App\Http\Controllers\StudentApplicationController;
+use App\Http\Controllers\NgoApplicationController;
+use App\Http\Controllers\NgoApplicationReviewController;
+use App\Http\Controllers\StudentAttendanceController;
+use App\Http\Controllers\NgoAttendanceController;
+use App\Http\Controllers\NgoCompletionController;
+use App\Http\Controllers\NgoCredentialController;
+
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+    });
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Student
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware('role:student')->prefix('student')->group(function () {
+        Route::get('/profile', [StudentProfileController::class, 'show']);
+        Route::put('/profile', [StudentProfileController::class, 'update']);
+        Route::get('/projects', [StudentProjectController::class, 'index']);
+        Route::get('/projects/{project}', [StudentProjectController::class, 'show']);
+        Route::post('/projects/{project}/apply',[StudentApplicationController::class, 'store']);
+        Route::get('/applications',[StudentApplicationController::class, 'index']);
+        Route::post('/applications/{application}/check-in',[StudentAttendanceController::class, 'checkIn']);
+        Route::get('/applications/{application}/attendance',[StudentAttendanceController::class, 'show']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | NGO
+    |--------------------------------------------------------------------------
+    */
+
+   Route::middleware('role:ngo')->prefix('ngo')->group(function () {
+
+    Route::get('/profile', [\App\Http\Controllers\Api\NgoProfileController::class,'show',]);
+
+    Route::put('/profile', [\App\Http\Controllers\Api\NgoProfileController::class,'update',]);
+
+    Route::get('/verification', [\App\Http\Controllers\Api\NgoVerificationController::class,'show',]);
+
+    Route::post('/verification', [\App\Http\Controllers\Api\NgoVerificationController::class,'submit',]);
+
+    Route::get('/projects', [NgoProjectController::class, 'index']);
+    Route::post('/projects', [NgoProjectController::class, 'store']);
+
+    Route::post('/projects/{project}/submit',[NgoProjectSubmissionController::class, 'submit']);
+
+    Route::get('/projects/{project}/applications',[NgoApplicationController::class, 'index']);
+
+    Route::post('/applications/{application}/accept',[NgoApplicationReviewController::class, 'accept']);
+
+    Route::post('/applications/{application}/reject',[NgoApplicationReviewController::class, 'reject']);
+
+    Route::post('/attendances/{attendance}/validate',[NgoAttendanceController::class, 'validateAttendance']);
+
+    Route::post('/applications/{application}/confirm-completion',[NgoCompletionController::class, 'confirm']);
+
+    Route::post('/applications/{application}/credential',[NgoCredentialController::class, 'issue']);
+});
+
+    /*
+    |--------------------------------------------------------------------------
+    | Campus
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware('role:campus')->prefix('campus')->group(function () {
+        Route::get('/profile', [CampusProfileController::class, 'show']);
+        Route::put('/profile', [CampusProfileController::class, 'update']);
+    });
+
+     /*
+    |--------------------------------------------------------------------------
+    | Admin
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+    Route::get('/projects/submitted', [
+        AdminProjectReviewController::class,
+        'index',
+    ]);
+
+    Route::post('/projects/{project}/approve', [
+        AdminProjectReviewController::class,
+        'approve',
+    ]);
+
+    Route::post('/projects/{project}/reject', [
+        AdminProjectReviewController::class,
+        'reject',
+    ]);
+});
+});
