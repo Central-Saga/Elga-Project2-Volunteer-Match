@@ -37,4 +37,9 @@ class VerificationRecord extends Model
     {
         return $this->belongsTo(User::class, 'reviewer_id');
     }
+
+    public function ngoProfile(): BelongsTo
+    {
+        return $this->belongsTo(NgoProfile::class, 'ngo_id');
+    }
 }

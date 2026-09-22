@@ -31,6 +31,12 @@ class NgoProjectController extends Controller
             ], 404);
         }
 
+        if ($ngoProfile->verification_status !== 'approved') {
+            return response()->json([
+                'message' => 'NGO verification must be approved before creating a project.',
+            ], 403);
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],

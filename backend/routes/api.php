@@ -21,6 +21,7 @@ use App\Http\Controllers\CredentialVerificationController;
 use App\Http\Controllers\AdminCredentialController;
 use App\Http\Controllers\CampusCredentialController;
 use App\Http\Controllers\CampusCredentialReportController;
+use App\Http\Controllers\AdminNgoVerificationController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -131,5 +132,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/credentials/{credential}/revoke',
         [AdminCredentialController::class, 'revoke'
     ]);
+
+    Route::get('/ngos/verifications',
+        [AdminNgoVerificationController::class, 'index']
+    );
+
+    Route::post('/ngos/verifications/{verification}/approve',
+        [AdminNgoVerificationController::class, 'approve']
+    );
+
+    Route::post('/ngos/verifications/{verification}/reject',
+        [AdminNgoVerificationController::class, 'reject']
+    );
 });
 });

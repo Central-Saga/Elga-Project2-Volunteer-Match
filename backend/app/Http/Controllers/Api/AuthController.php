@@ -17,14 +17,13 @@ class AuthController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
-            'role' => ['required', 'in:student,ngo,campus'],
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => $validated['password'],
-            'role' => $validated['role'],
+            'role' => 'student',
         ]);
 
         $token = $user->createToken('volunteer-match')->plainTextToken;

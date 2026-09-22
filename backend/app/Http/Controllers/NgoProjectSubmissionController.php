@@ -24,6 +24,12 @@ class NgoProjectSubmissionController extends Controller
             ], 403);
         }
 
+        if ($ngoProfile->verification_status !== 'approved') {
+            return response()->json([
+                'message' => 'NGO verification must be approved before submitting a project.',
+            ], 403);
+        }
+
         // Project hanya boleh disubmit dari draft
         if ($project->status !== 'draft') {
             return response()->json([

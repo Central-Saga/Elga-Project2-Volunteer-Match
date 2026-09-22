@@ -28,6 +28,12 @@ class AdminProjectReviewController extends Controller
             ], 422);
         }
 
+        if ($project->ngoProfile->verification_status !== 'approved') {
+            return response()->json([
+                'message' => 'Project owner NGO must be verified before approval.',
+            ], 422);
+        }
+
         $project->update([
             'status' => 'published',
             'rejection_reason' => null,
