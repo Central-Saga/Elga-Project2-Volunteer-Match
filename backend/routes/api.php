@@ -16,6 +16,11 @@ use App\Http\Controllers\StudentAttendanceController;
 use App\Http\Controllers\NgoAttendanceController;
 use App\Http\Controllers\NgoCompletionController;
 use App\Http\Controllers\NgoCredentialController;
+use App\Http\Controllers\StudentCredentialController;
+use App\Http\Controllers\CredentialVerificationController;
+use App\Http\Controllers\AdminCredentialController;
+use App\Http\Controllers\CampusCredentialController;
+use App\Http\Controllers\CampusCredentialReportController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -26,6 +31,11 @@ Route::prefix('auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
     });
 });
+
+Route::get(
+    '/credentials/verify/{credentialNumber}',
+    [CredentialVerificationController::class, 'verify']
+);
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -44,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/applications',[StudentApplicationController::class, 'index']);
         Route::post('/applications/{application}/check-in',[StudentAttendanceController::class, 'checkIn']);
         Route::get('/applications/{application}/attendance',[StudentAttendanceController::class, 'show']);
+        Route::get('/applications/{application}/credential',[StudentCredentialController::class, 'show']);
     });
 
     /*
@@ -89,6 +100,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:campus')->prefix('campus')->group(function () {
         Route::get('/profile', [CampusProfileController::class, 'show']);
         Route::put('/profile', [CampusProfileController::class, 'update']);
+        Route::get('/credentials/verify/{credentialNumber}',[CampusCredentialController::class, 'verify']);
+        Route::get('/credentials',[CampusCredentialReportController::class, 'index']);
+        Route::get('/reports/volunteer-activities',[CampusCredentialReportController::class, 'volunteerActivities']);
+        Route::get('/reports/volunteer-activities/export',[CampusCredentialReportController::class, 'exportVolunteerActivities']);
     });
 
      /*
@@ -111,6 +126,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/projects/{project}/reject', [
         AdminProjectReviewController::class,
         'reject',
+    ]);
+
+    Route::post('/credentials/{credential}/revoke',
+        [AdminCredentialController::class, 'revoke'
     ]);
 });
 });
