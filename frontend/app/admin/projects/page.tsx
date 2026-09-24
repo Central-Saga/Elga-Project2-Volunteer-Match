@@ -50,6 +50,7 @@ const navigation = [
   { label: "Dashboard", href: "/admin" },
   { label: "NGO Verifications", href: "/admin/verifications" },
   { label: "Project Reviews", href: "/admin/projects" },
+  { label: "Credentials", href: "/admin/credentials" },
 ];
 
 function formatDate(date: string) {

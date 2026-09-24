@@ -7,6 +7,21 @@ use Illuminate\Http\Request;
 
 class AdminCredentialController extends Controller
 {
+    public function index()
+    {
+        $credentials = Credential::with([
+            'application.project',
+            'application.studentProfile',
+        ])
+            ->latest('issued_at')
+            ->get();
+
+        return response()->json([
+            'message' => 'Credentials retrieved successfully.',
+            'data' => $credentials,
+        ]);
+    }
+
     public function revoke(Request $request, Credential $credential)
     {
         if ($credential->status === 'revoked') {

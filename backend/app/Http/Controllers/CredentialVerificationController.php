@@ -23,22 +23,26 @@ class CredentialVerificationController extends Controller
         }
 
         if ($credential->status === 'revoked') {
-            return response()->json([
-                'valid' => false,
-                'message' => 'Credential has been revoked.',
-                'data' => [
-                    'credential_number' => $credential->credential_number,
-                    'status' => $credential->status,
-                    'revoked_at' => $credential->revoked_at,
-                    'revocation_reason' => $credential->revocation_reason,
-                ],
-            ]);
-        }
+    return response()->json([
+        'valid' => false,
+        'message' => 'Credential has been revoked.',
+        'data' => [
+            'application_id' => $credential->application_id,
+            'credential_number' => $credential->credential_number,
+            'status' => $credential->status,
+            'title' => $credential->title,
+            'issued_at' => $credential->issued_at,
+            'revoked_at' => $credential->revoked_at,
+            'revocation_reason' => $credential->revocation_reason,
+        ],
+    ]);
+}
 
         return response()->json([
             'valid' => true,
             'message' => 'Credential is valid.',
             'data' => [
+                'application_id' => $credential->application_id,
                 'credential_number' => $credential->credential_number,
                 'title' => $credential->title,
                 'issued_at' => $credential->issued_at,

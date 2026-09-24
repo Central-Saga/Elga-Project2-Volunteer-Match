@@ -129,6 +129,10 @@ Route::middleware('auth:sanctum')->group(function () {
         'reject',
     ]);
 
+    Route::get('/credentials',
+    [AdminCredentialController::class, 'index']
+    );
+
     Route::post('/credentials/{credential}/revoke',
         [AdminCredentialController::class, 'revoke'
     ]);
