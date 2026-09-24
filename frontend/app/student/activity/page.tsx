@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+import DashboardShell from "@/components/layout/DashboardShell";
 import { apiFetch } from "@/lib/api";
 import {
   getStoredToken,
   getStoredUser,
   type AuthUser,
 } from "@/lib/auth";
-import DashboardShell from "@/components/layout/DashboardShell";
 
 type Application = {
   id: number;
@@ -77,27 +78,16 @@ type CredentialResponse = {
   data: Credential;
 };
 
+type CheckInResponse = {
+  message: string;
+};
+
 const navigation = [
-  {
-    label: "Explore",
-    href: "/student",
-  },
-  {
-    label: "My Applications",
-    href: "/student/applications",
-  },
-  {
-    label: "My Activity",
-    href: "/student/activity",
-  },
-  {
-    label: "Credentials",
-    href: "/student/credentials",
-  },
-  {
-    label: "Profile",
-    href: "/student/profile",
-  },
+  { label: "Explore", href: "/student" },
+  { label: "My Applications", href: "/student/applications" },
+  { label: "My Activity", href: "/student/activity" },
+  { label: "Credentials", href: "/student/credentials" },
+  { label: "Profile", href: "/student/profile" },
 ];
 
 export default function StudentActivityPage() {
@@ -106,7 +96,12 @@ export default function StudentActivityPage() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [checkingInId, setCheckingInId] =
+    useState<number | null>(null);
+
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     const token = getStoredToken();
@@ -191,6 +186,58 @@ export default function StudentActivityPage() {
     loadActivities();
   }, [router]);
 
+  async function handleCheckIn(applicationId: number) {
+    const token = getStoredToken();
+
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+
+    setCheckingInId(applicationId);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await apiFetch<CheckInResponse>(
+        `/student/applications/${applicationId}/check-in`,
+        {
+          method: "POST",
+          token,
+        },
+      );
+
+      const attendanceResult =
+        await apiFetch<AttendanceResponse>(
+          `/student/applications/${applicationId}/attendance`,
+          {
+            token,
+          },
+        );
+
+      setActivities((current) =>
+        current.map((item) =>
+          item.application.id === applicationId
+            ? {
+                ...item,
+                attendance: attendanceResult.data,
+              }
+            : item,
+        ),
+      );
+
+      setSuccess(response.message);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Gagal melakukan check-in.",
+      );
+    } finally {
+      setCheckingInId(null);
+    }
+  }
+
   if (!user) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f5f5f1]">
@@ -223,6 +270,30 @@ export default function StudentActivityPage() {
           </p>
         </div>
 
+        {error && (
+          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
+            <p className="text-sm font-semibold text-red-700">
+              Something went wrong
+            </p>
+
+            <p className="mt-1 text-sm text-red-600">
+              {error}
+            </p>
+          </div>
+        )}
+
+        {success && (
+          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
+            <p className="text-sm font-semibold text-emerald-700">
+              Success
+            </p>
+
+            <p className="mt-1 text-sm text-emerald-600">
+              {success}
+            </p>
+          </div>
+        )}
+
         {loading && (
           <div className="mt-8 space-y-5">
             {[1, 2].map((item) => (
@@ -246,57 +317,47 @@ export default function StudentActivityPage() {
           </div>
         )}
 
-        {!loading && error && (
-          <div className="mt-8 rounded-3xl border border-red-100 bg-red-50 p-6">
-            <p className="text-sm font-semibold text-red-700">
-              Gagal memuat aktivitas
+        {!loading && !error && activities.length === 0 && (
+          <div className="mt-8 rounded-3xl bg-white p-12 text-center shadow-sm ring-1 ring-black/5">
+            <h2 className="text-lg font-bold">
+              Belum ada aktivitas
+            </h2>
+
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
+              Setelah kamu apply kegiatan, progress-nya akan
+              muncul di sini.
             </p>
 
-            <p className="mt-1 text-sm leading-6 text-red-600">
-              {error}
-            </p>
+            <button
+              onClick={() => router.push("/student")}
+              className="mt-6 rounded-xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white"
+            >
+              Explore Projects
+            </button>
           </div>
         )}
 
-        {!loading &&
-          !error &&
-          activities.length === 0 && (
-            <div className="mt-8 rounded-3xl bg-white p-12 text-center shadow-sm ring-1 ring-black/5">
-              <h2 className="text-lg font-bold">
-                Belum ada aktivitas
-              </h2>
-
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
-                Setelah kamu apply kegiatan, progress-nya akan
-                muncul di sini.
-              </p>
-
-              <button
-                onClick={() => router.push("/student")}
-                className="mt-6 rounded-xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white"
-              >
-                Explore Projects
-              </button>
-            </div>
-          )}
-
-        {!loading &&
-          !error &&
-          activities.length > 0 && (
-            <div className="mt-8 space-y-5">
-              {activities.map((item) => (
-                <ActivityCard
-                  key={item.application.id}
-                  item={item}
-                  onViewProject={() =>
-                    router.push(
-                      `/student/projects/${item.application.project.id}`,
-                    )
-                  }
-                />
-              ))}
-            </div>
-          )}
+        {!loading && activities.length > 0 && (
+          <div className="mt-8 space-y-5">
+            {activities.map((item) => (
+              <ActivityCard
+                key={item.application.id}
+                item={item}
+                checkingIn={
+                  checkingInId === item.application.id
+                }
+                onCheckIn={() =>
+                  handleCheckIn(item.application.id)
+                }
+                onViewProject={() =>
+                  router.push(
+                    `/student/projects/${item.application.project.id}`,
+                  )
+                }
+              />
+            ))}
+          </div>
+        )}
       </div>
     </DashboardShell>
   );
@@ -304,19 +365,51 @@ export default function StudentActivityPage() {
 
 function ActivityCard({
   item,
+  checkingIn,
+  onCheckIn,
   onViewProject,
 }: {
   item: ActivityItem;
+  checkingIn: boolean;
+  onCheckIn: () => void;
   onViewProject: () => void;
 }) {
   const { application, attendance, credential } = item;
 
   const isAccepted = application.status === "accepted";
+
   const isCheckedIn =
     attendance?.status === "checked_in" ||
     attendance?.status === "validated";
-  const isValidated = attendance?.status === "validated";
+
+  const isValidated =
+    attendance?.status === "validated";
+
   const hasCredential = Boolean(credential);
+
+  const now = new Date();
+
+  const startAt = new Date(
+    application.project.start_at,
+  );
+
+  const endAt = new Date(
+    application.project.end_at,
+  );
+
+  const checkInOpensAt = new Date(
+    startAt.getTime() - 30 * 60 * 1000,
+  );
+
+  const isTooEarly =
+    now < checkInOpensAt;
+
+  const isCheckInOpen =
+    now >= checkInOpensAt &&
+    now <= endAt;
+
+  const isCheckInClosed =
+    now > endAt;
 
   return (
     <article className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-black/5">
@@ -342,9 +435,7 @@ function ActivityCard({
             {application.project.location ??
               "Flexible location"}{" "}
             ·{" "}
-            {new Date(
-              application.project.start_at,
-            ).toLocaleDateString("id-ID")}
+            {startAt.toLocaleDateString("id-ID")}
           </p>
         </div>
 
@@ -382,7 +473,7 @@ function ActivityCard({
         <ProgressStep
           number="03"
           title="Attendance"
-          active={isValidated}
+          active={isCheckedIn}
           subtitle={
             attendance
               ? attendance.status.replace("_", " ")
@@ -401,6 +492,108 @@ function ActivityCard({
           }
         />
       </div>
+
+      {isAccepted &&
+        !attendance &&
+        isTooEarly && (
+          <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-5">
+            <p className="text-sm font-bold text-gray-900">
+              Check-in belum dibuka
+            </p>
+
+            <p className="mt-1 text-sm leading-6 text-gray-600">
+              Check-in akan dibuka 30 menit sebelum kegiatan
+              dimulai.
+            </p>
+
+            <p className="mt-2 text-xs text-gray-500">
+              Dibuka pada{" "}
+              {checkInOpensAt.toLocaleString("id-ID")}
+            </p>
+          </div>
+        )}
+
+      {isAccepted &&
+        !attendance &&
+        isCheckInOpen && (
+          <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-blue-100 bg-blue-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold text-blue-900">
+                Ready for check-in
+              </p>
+
+              <p className="mt-1 text-sm leading-6 text-blue-700">
+                Check-in sedang dibuka. Lakukan check-in untuk
+                mencatat kehadiran kamu.
+              </p>
+
+              <p className="mt-2 text-xs text-blue-600">
+                Check-in tersedia sampai{" "}
+                {endAt.toLocaleString("id-ID")}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onCheckIn}
+              disabled={checkingIn}
+              className="shrink-0 rounded-xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {checkingIn
+                ? "Checking In..."
+                : "Check In"}
+            </button>
+          </div>
+        )}
+
+      {isAccepted &&
+        !attendance &&
+        isCheckInClosed && (
+          <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 p-5">
+            <p className="text-sm font-bold text-red-900">
+              Check-in closed
+            </p>
+
+            <p className="mt-1 text-sm leading-6 text-red-700">
+              Waktu kegiatan sudah selesai sehingga check-in
+              tidak lagi tersedia.
+            </p>
+          </div>
+        )}
+
+      {attendance?.status === "checked_in" && (
+        <div className="mt-6 rounded-2xl border border-amber-100 bg-amber-50 p-5">
+          <p className="text-sm font-bold text-amber-900">
+            Check-in recorded
+          </p>
+
+          <p className="mt-1 text-sm leading-6 text-amber-700">
+            Kehadiran kamu sudah tercatat dan sedang menunggu
+            validasi dari NGO.
+          </p>
+
+          {attendance.checked_in_at && (
+            <p className="mt-2 text-xs text-amber-600">
+              Check-in:{" "}
+              {new Date(
+                attendance.checked_in_at,
+              ).toLocaleString("id-ID")}
+            </p>
+          )}
+        </div>
+      )}
+
+      {isValidated && (
+        <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
+          <p className="text-sm font-bold text-emerald-900">
+            Attendance validated
+          </p>
+
+          <p className="mt-1 text-sm leading-6 text-emerald-700">
+            NGO sudah memvalidasi kehadiran kamu.
+          </p>
+        </div>
+      )}
 
       {credential && (
         <div className="mt-5 rounded-2xl bg-gray-50 p-4">
@@ -451,20 +644,28 @@ function ProgressStep({
       }`}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold">{number}</span>
+        <span className="text-xs font-bold">
+          {number}
+        </span>
 
         <span
           className={`h-2 w-2 rounded-full ${
-            active ? "bg-emerald-400" : "bg-gray-300"
+            active
+              ? "bg-emerald-400"
+              : "bg-gray-300"
           }`}
         />
       </div>
 
-      <p className="mt-5 text-sm font-bold">{title}</p>
+      <p className="mt-5 text-sm font-bold">
+        {title}
+      </p>
 
       <p
         className={`mt-1 text-xs capitalize ${
-          active ? "text-white/60" : "text-gray-400"
+          active
+            ? "text-white/60"
+            : "text-gray-400"
         }`}
       >
         {subtitle}
@@ -493,7 +694,8 @@ function StatusBadge({
   return (
     <span
       className={`rounded-full px-3 py-1.5 text-xs font-semibold capitalize ${
-        styles[status] ?? "bg-gray-100 text-gray-600"
+        styles[status] ??
+        "bg-gray-100 text-gray-600"
       }`}
     >
       {status.replace("_", " ")}

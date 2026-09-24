@@ -17,7 +17,6 @@ class NgoApplicationController extends Controller
             ], 404);
         }
 
-        // Pastikan project milik NGO yang sedang login
         if ($project->ngo_profile_id !== $ngoProfile->id) {
             return response()->json([
                 'message' => 'You are not allowed to view applications for this project.',
@@ -25,7 +24,12 @@ class NgoApplicationController extends Controller
         }
 
         $applications = $project->applications()
-            ->with('studentProfile')
+            ->with([
+                'studentProfile',
+                'attendance',
+                'completion',
+                'credential',
+            ])
             ->latest()
             ->get();
 
