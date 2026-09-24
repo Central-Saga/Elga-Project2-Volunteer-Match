@@ -11,7 +11,7 @@ class StudentProfile extends Model
     protected $fillable = [
         'user_id',
         'campus_id',
-        'student_id',
+        'nim',
         'faculty',
         'study_program',
         'semester',
