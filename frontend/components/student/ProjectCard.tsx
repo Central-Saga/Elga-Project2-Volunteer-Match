@@ -2,6 +2,13 @@
 
 import { useRouter } from "next/navigation";
 
+type MatchBreakdown = {
+  skills: number;
+  interests: number;
+  availability: number;
+  location: number;
+};
+
 type Project = {
   id: number;
   title: string;
@@ -13,6 +20,10 @@ type Project = {
   required_skills: string[] | null;
   required_interests: string[] | null;
   status: string;
+
+  match_score?: number;
+  match_breakdown?: MatchBreakdown;
+  match_reasons?: string[];
 };
 
 type ProjectCardProps = {
@@ -34,10 +45,31 @@ function formatTime(date: string) {
   });
 }
 
+function getMatchLabel(score: number) {
+  if (score >= 80) {
+    return "Highly Recommended";
+  }
+
+  if (score >= 60) {
+    return "Recommended";
+  }
+
+  if (score >= 40) {
+    return "Potential Match";
+  }
+
+  return "Low Match";
+}
+
 export default function ProjectCard({
   project,
 }: ProjectCardProps) {
   const router = useRouter();
+
+  const hasMatching =
+    typeof project.match_score === "number";
+
+  const matchScore = project.match_score ?? 0;
 
   return (
     <article className="group overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-xl">
@@ -49,14 +81,28 @@ export default function ProjectCard({
         <div className="absolute -bottom-20 left-8 h-36 w-36 rounded-full border border-white/10" />
 
         <div className="relative flex h-full flex-col justify-between p-5">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <span className="rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white">
               Published
             </span>
 
-            <span className="text-xs text-white/55">
-              {project.capacity} slots
-            </span>
+            {hasMatching ? (
+              <div className="flex items-center gap-2">
+                {matchScore >= 60 && (
+                  <span className="rounded-full bg-emerald-400/15 px-3 py-1.5 text-[11px] font-semibold text-emerald-200">
+                    {getMatchLabel(matchScore)}
+                  </span>
+                )}
+
+                <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-bold text-gray-900">
+                  {matchScore}% Match
+                </span>
+              </div>
+            ) : (
+              <span className="text-xs text-white/55">
+                {project.capacity} slots
+              </span>
+            )}
           </div>
 
           <div>
@@ -90,6 +136,29 @@ export default function ProjectCard({
           {project.description}
         </p>
 
+        {hasMatching &&
+          project.match_reasons &&
+          project.match_reasons.length > 0 && (
+            <div className="mt-4 rounded-2xl bg-gray-50 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">
+                Why it matches
+              </p>
+
+              <div className="mt-2 space-y-1.5">
+                {project.match_reasons
+                  .slice(0, 2)
+                  .map((reason) => (
+                    <p
+                      key={reason}
+                      className="text-xs leading-5 text-gray-600"
+                    >
+                      ✓ {reason}
+                    </p>
+                  ))}
+              </div>
+            </div>
+          )}
+
         <div className="mt-5 flex flex-wrap gap-2">
           {project.required_interests
             ?.slice(0, 3)
@@ -104,7 +173,7 @@ export default function ProjectCard({
         </div>
 
         <div className="mt-6 border-t border-black/5 pt-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[11px] uppercase tracking-[0.12em] text-gray-400">
                 Schedule
@@ -118,7 +187,9 @@ export default function ProjectCard({
 
             <button
               onClick={() =>
-                router.push(`/student/projects/${project.id}`)
+                router.push(
+                  `/student/projects/${project.id}`,
+                )
               }
               className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:px-5"
             >
