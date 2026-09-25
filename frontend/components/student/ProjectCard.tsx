@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 type MatchBreakdown = {
   skills: number;
@@ -31,34 +32,76 @@ type ProjectCardProps = {
 };
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  return new Date(
+    date,
+  ).toLocaleDateString(
+    "id-ID",
+    {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    },
+  );
 }
 
-function formatTime(date: string) {
-  return new Date(date).toLocaleTimeString("id-ID", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function getProjectImage(
+  project: Project,
+) {
+  const text = [
+    project.title,
+    project.description,
+    ...(project.required_interests ??
+      []),
+    ...(project.required_skills ??
+      []),
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  if (
+    text.includes("beach") ||
+    text.includes("environment") ||
+    text.includes("cleanup")
+  ) {
+    return "https://images.unsplash.com/photo-1530053969600-caed2596d242?auto=format&fit=crop&w=900&q=80";
+  }
+
+  if (
+    text.includes("education") ||
+    text.includes("teach") ||
+    text.includes("school")
+  ) {
+    return "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=900&q=80";
+  }
+
+  if (
+    text.includes("technology") ||
+    text.includes("tech") ||
+    text.includes("digital") ||
+    text.includes("php")
+  ) {
+    return "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80";
+  }
+
+  return "https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=900&q=80";
 }
 
-function getMatchLabel(score: number) {
+function getMatchClass(
+  score: number,
+) {
   if (score >= 80) {
-    return "Highly Recommended";
+    return "bg-emerald-50 text-emerald-700";
   }
 
   if (score >= 60) {
-    return "Recommended";
+    return "bg-[#f2edff] text-[#6d35e8]";
   }
 
   if (score >= 40) {
-    return "Potential Match";
+    return "bg-amber-50 text-amber-700";
   }
 
-  return "Low Match";
+  return "bg-slate-100 text-slate-500";
 }
 
 export default function ProjectCard({
@@ -66,138 +109,144 @@ export default function ProjectCard({
 }: ProjectCardProps) {
   const router = useRouter();
 
-  const hasMatching =
-    typeof project.match_score === "number";
+  const image =
+    getProjectImage(project);
 
-  const matchScore = project.match_score ?? 0;
+  const matchScore =
+    project.match_score ?? 0;
 
   return (
-    <article className="group overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-xl">
-      <div className="relative h-40 overflow-hidden bg-gray-900">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black" />
+    <motion.article
+      variants={{
+        hidden: {
+          opacity: 0,
+          y: 18,
+        },
+        show: {
+          opacity: 1,
+          y: 0,
+          transition: {
+            duration: 0.4,
+            ease: "easeOut" as const,
+          },
+        },
+      }}
+      whileHover={{
+        y: -6,
+      }}
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#eeeaf5] bg-white shadow-[0_6px_22px_rgba(72,45,120,0.05)] transition hover:shadow-[0_14px_36px_rgba(72,45,120,0.12)]"
+    >
+      <div className="relative h-[180px] overflow-hidden">
+        <motion.img
+          src={image}
+          alt={project.title}
+          whileHover={{
+            scale: 1.06,
+          }}
+          transition={{
+            duration: 0.45,
+          }}
+          className="h-full w-full object-cover"
+        />
 
-        <div className="absolute -right-12 -top-14 h-40 w-40 rounded-full border border-white/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
 
-        <div className="absolute -bottom-20 left-8 h-36 w-36 rounded-full border border-white/10" />
+        <div className="absolute left-3 top-3">
+          <span className="rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-semibold text-[#6d35e8] shadow-sm">
+            Volunteer
+          </span>
+        </div>
 
-        <div className="relative flex h-full flex-col justify-between p-5">
-          <div className="flex items-center justify-between gap-3">
-            <span className="rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white">
-              Published
-            </span>
-
-            {hasMatching ? (
-              <div className="flex items-center gap-2">
-                {matchScore >= 60 && (
-                  <span className="rounded-full bg-emerald-400/15 px-3 py-1.5 text-[11px] font-semibold text-emerald-200">
-                    {getMatchLabel(matchScore)}
-                  </span>
-                )}
-
-                <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-bold text-gray-900">
-                  {matchScore}% Match
-                </span>
-              </div>
-            ) : (
-              <span className="text-xs text-white/55">
-                {project.capacity} slots
-              </span>
-            )}
-          </div>
-
-          <div>
-            <p className="text-xs text-white/45">
-              Volunteer opportunity
-            </p>
-
-            <p className="mt-1 line-clamp-1 text-lg font-bold text-white">
-              {project.title}
-            </p>
-          </div>
+        <div className="absolute right-3 top-3">
+          <span
+            className={`rounded-full px-3 py-1.5 text-[10px] font-semibold shadow-sm ${getMatchClass(
+              matchScore,
+            )}`}
+          >
+            {matchScore}% Match
+          </span>
         </div>
       </div>
 
-      <div className="p-5">
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex items-center gap-2 text-[11px] text-slate-400">
           <span>
-            {project.location ?? "Flexible location"}
+            📍{" "}
+            {project.location ??
+              "Flexible"}
           </span>
 
-          <span className="h-1 w-1 rounded-full bg-gray-300" />
+          <span>•</span>
 
-          <span>{formatDate(project.start_at)}</span>
+          <span>
+            {formatDate(
+              project.start_at,
+            )}
+          </span>
         </div>
 
-        <h3 className="mt-4 line-clamp-2 text-xl font-bold tracking-tight">
+        <h3 className="mt-3 line-clamp-2 text-lg font-semibold tracking-[-0.02em] text-[#171321]">
           {project.title}
         </h3>
 
-        <p className="mt-2 line-clamp-3 text-sm leading-6 text-gray-500">
+        <p className="mt-2 line-clamp-2 min-h-[40px] text-sm leading-5 text-slate-500">
           {project.description}
         </p>
 
-        {hasMatching &&
-          project.match_reasons &&
-          project.match_reasons.length > 0 && (
-            <div className="mt-4 rounded-2xl bg-gray-50 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">
-                Why it matches
-              </p>
-
-              <div className="mt-2 space-y-1.5">
-                {project.match_reasons
-                  .slice(0, 2)
-                  .map((reason) => (
-                    <p
-                      key={reason}
-                      className="text-xs leading-5 text-gray-600"
-                    >
-                      ✓ {reason}
-                    </p>
-                  ))}
-              </div>
-            </div>
-          )}
-
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-4 flex min-h-[28px] flex-wrap gap-1.5">
           {project.required_interests
             ?.slice(0, 3)
             .map((interest) => (
               <span
                 key={interest}
-                className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600"
+                className="rounded-md bg-[#f6f3fb] px-2.5 py-1 text-[10px] font-medium text-[#685b7d]"
               >
                 {interest}
               </span>
             ))}
         </div>
 
-        <div className="mt-6 border-t border-black/5 pt-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.12em] text-gray-400">
-                Schedule
-              </p>
-
-              <p className="mt-1 text-sm font-semibold">
-                {formatTime(project.start_at)} —{" "}
-                {formatTime(project.end_at)}
-              </p>
-            </div>
-
-            <button
-              onClick={() =>
-                router.push(
-                  `/student/projects/${project.id}`,
-                )
+        {project.match_reasons?.[0] && (
+          <div className="mt-4 rounded-xl bg-[#faf8ff] px-3 py-2.5">
+            <p className="line-clamp-1 text-[10px] text-[#786b8f]">
+              ✓{" "}
+              {
+                project
+                  .match_reasons[0]
               }
-              className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:px-5"
-            >
-              View
-            </button>
+            </p>
           </div>
+        )}
+
+        <div className="mt-auto flex items-center justify-between border-t border-[#f0edf5] pt-4">
+          <div>
+            <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+              Capacity
+            </p>
+
+            <p className="mt-1 text-xs font-semibold text-[#30283e]">
+              {project.capacity} volunteers
+            </p>
+          </div>
+
+          <motion.button
+            whileHover={{
+              scale: 1.04,
+            }}
+            whileTap={{
+              scale: 0.96,
+            }}
+            onClick={() =>
+              router.push(
+                `/student/projects/${project.id}`,
+              )
+            }
+            className="rounded-lg bg-[#6d35e8] px-4 py-2.5 text-xs font-semibold text-white shadow-[0_6px_14px_rgba(109,53,232,0.18)] transition hover:bg-[#5e2bd0]"
+          >
+            View Project
+          </motion.button>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }

@@ -22,6 +22,7 @@ use App\Http\Controllers\AdminCredentialController;
 use App\Http\Controllers\CampusCredentialController;
 use App\Http\Controllers\CampusCredentialReportController;
 use App\Http\Controllers\AdminNgoVerificationController;
+use App\Http\Controllers\NotificationController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -39,6 +40,21 @@ Route::get(
 );
 
 Route::middleware('auth:sanctum')->group(function () {
+
+    Route::get('/notifications', [
+    NotificationController::class,
+    'index'
+]);
+
+Route::post('/notifications/{notification}/read', [
+    NotificationController::class,
+    'markAsRead'
+]);
+
+Route::post('/notifications/read-all', [
+    NotificationController::class,
+    'markAllAsRead'
+]);
 
     /*
     |--------------------------------------------------------------------------

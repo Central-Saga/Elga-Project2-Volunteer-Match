@@ -17,13 +17,17 @@ class StudentProjectController extends Controller
         )->first();
 
         $projects = Project::with('ngoProfile')
-            ->withCount('applications')
+            ->withCount([
+            'applications as accepted_applications_count' => function ($query) {
+            $query->where('status', 'accepted');
+            },
+            ])
             ->where('status', 'published')
             ->where('end_at', '>=', now())
             ->get()
             ->filter(function ($project) {
                 // Hard filter: project penuh tidak direkomendasikan.
-                return $project->applications_count < $project->capacity;
+                return $project->accepted_applications_count < $project->capacity;
             })
             ->map(function ($project) use ($studentProfile) {
                 $matching = $this->calculateMatch(
@@ -61,7 +65,11 @@ class StudentProjectController extends Controller
         }
 
         $project->load('ngoProfile');
-        $project->loadCount('applications');
+        $project->loadCount([
+        'applications as accepted_applications_count' => function ($query) {
+        $query->where('status', 'accepted');
+        },
+        ]);
 
         $studentProfile = StudentProfile::where(
             'user_id',

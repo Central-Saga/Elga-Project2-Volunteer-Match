@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Application;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use App\Models\Notification;
 
 class StudentApplicationController extends Controller
 {
@@ -61,6 +62,17 @@ class StudentApplicationController extends Controller
             'motivation' => $validated['motivation'] ?? null,
             'status' => 'pending',
             'applied_at' => now(),
+        ]);
+
+        Notification::create([
+            'user_id' => $project->ngoProfile->user_id,
+            'type' => 'new_application',
+            'title' => 'New Volunteer Application',
+            'message' => 'A student applied to your project: ' . $project->title,
+            'data' => [
+            'application_id' => $application->id,
+            'project_id' => $project->id,
+        ],
         ]);
 
         return response()->json([

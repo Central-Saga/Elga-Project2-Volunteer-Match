@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Credential;
 use Illuminate\Http\Request;
+use App\Models\Notification;
 
 class AdminCredentialController extends Controller
 {
@@ -44,6 +45,25 @@ class AdminCredentialController extends Controller
             'status' => 'revoked',
             'revoked_at' => now(),
             'revocation_reason' => $validated['revocation_reason'],
+        ]);
+
+        $credential->load([
+    'application.project',
+    'application.studentProfile',
+]);
+
+        Notification::create([
+            'user_id' => $credential->application->studentProfile->user_id,
+            'type' => 'credential_revoked',
+            'title' => 'Credential Revoked',
+            'message' => 'Your credential for ' . $credential->application->project->title . ' has been revoked.',
+            'data' => [
+                'application_id' => $credential->application_id,
+                'project_id' => $credential->application->project_id,
+                'credential_id' => $credential->id,
+                'credential_number' => $credential->credential_number,
+                'revocation_reason' => $validated['revocation_reason'],
+            ],
         ]);
 
         return response()->json([
