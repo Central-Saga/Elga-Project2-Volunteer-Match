@@ -16,10 +16,12 @@ class StudentProfile extends Model
         'study_program',
         'semester',
         'bio',
+        'avatar_url',
         'skills',
         'interests',
         'availability',
         'location',
+        'profile_completion',
     ];
 
     protected $casts = [
