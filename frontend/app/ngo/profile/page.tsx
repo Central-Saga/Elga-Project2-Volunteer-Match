@@ -9,8 +9,8 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-
 import DashboardShell from "@/components/layout/DashboardShell";
+import DeleteAccountCard from "@/components/account/DeleteAccountCard";
 import { apiFetch } from "@/lib/api";
 import {
   getStoredToken,
@@ -1369,6 +1369,10 @@ export default function NgoProfilePage() {
             </button>
           </div>
         </motion.section>
+        <DeleteAccountCard
+          title="Delete organization account"
+          description="Nonaktifkan akses account organisasi dari Volunteer Match. Project, application, completion, dan credential historis tetap dipertahankan sebagai record."
+        />
       </motion.div>
     </DashboardShell>
   );

@@ -9,12 +9,14 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 import DashboardShell from "@/components/layout/DashboardShell";
+import { adminNavigation } from "@/lib/admin-navigation";
 import { apiFetch } from "@/lib/api";
 import {
   getStoredToken,
   getStoredUser,
   type AuthUser,
 } from "@/lib/auth";
+
 
 type Student = {
   nim?: string | null;
@@ -44,29 +46,6 @@ type VerifyResponse = {
   message: string;
   data?: CredentialData;
 };
-
-const navigation = [
-  {
-    label: "Dashboard",
-    href: "/campus",
-  },
-  {
-    label: "Credentials",
-    href: "/campus/credentials",
-  },
-  {
-    label: "Verify Credential",
-    href: "/campus/verify",
-  },
-  {
-    label: "Reports",
-    href: "/campus/reports",
-  },
-  {
-    label: "Profile",
-    href: "/campus/profile",
-  },
-];
 
 const pageVariants = {
   hidden: {},
@@ -267,13 +246,11 @@ export default function CampusVerifyPage() {
     result?.valid === false;
 
   return (
-    <DashboardShell
-      user={user}
-      role="campus"
-      navigation={
-        navigation
-      }
-    >
+  <DashboardShell
+  user={user}
+  role="admin"
+  navigation={adminNavigation}
+>
       <motion.div
         variants={
           pageVariants

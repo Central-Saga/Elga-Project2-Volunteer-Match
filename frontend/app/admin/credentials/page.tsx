@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 import DashboardShell from "@/components/layout/DashboardShell";
+import { adminNavigation } from "@/lib/admin-navigation";
 import { apiFetch } from "@/lib/api";
 import {
   getStoredToken,
@@ -61,25 +62,6 @@ type FilterMode =
   | "all"
   | "active"
   | "revoked";
-
-const navigation = [
-  {
-    label: "Dashboard",
-    href: "/admin",
-  },
-  {
-    label: "NGO Verifications",
-    href: "/admin/verifications",
-  },
-  {
-    label: "Project Reviews",
-    href: "/admin/projects",
-  },
-  {
-    label: "Credentials",
-    href: "/admin/credentials",
-  },
-];
 
 const pageVariants = {
   hidden: {},
@@ -477,12 +459,10 @@ export default function AdminCredentialsPage() {
 
   return (
     <DashboardShell
-      user={user}
-      role="admin"
-      navigation={
-        navigation
-      }
-    >
+  user={user}
+  role="admin"
+  navigation={adminNavigation}
+>
       <motion.div
         variants={
           pageVariants

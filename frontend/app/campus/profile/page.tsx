@@ -8,14 +8,16 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-
 import DashboardShell from "@/components/layout/DashboardShell";
+import DeleteAccountCard from "@/components/account/DeleteAccountCard";
+import { adminNavigation } from "@/lib/admin-navigation";
 import { apiFetch } from "@/lib/api";
 import {
   getStoredToken,
   getStoredUser,
   type AuthUser,
 } from "@/lib/auth";
+
 
 type Campus = {
   id: number;
@@ -38,29 +40,6 @@ type UpdateProfileResponse = {
   message: string;
   profile: CampusProfile;
 };
-
-const navigation = [
-  {
-    label: "Dashboard",
-    href: "/campus",
-  },
-  {
-    label: "Credentials",
-    href: "/campus/credentials",
-  },
-  {
-    label: "Verify Credential",
-    href: "/campus/verify",
-  },
-  {
-    label: "Reports",
-    href: "/campus/reports",
-  },
-  {
-    label: "Profile",
-    href: "/campus/profile",
-  },
-];
 
 const pageVariants = {
   hidden: {},
@@ -322,13 +301,11 @@ export default function CampusProfilePage() {
   }
 
   return (
-    <DashboardShell
-      user={user}
-      role="campus"
-      navigation={
-        navigation
-      }
-    >
+  <DashboardShell
+  user={user}
+  role="admin"
+  navigation={adminNavigation}
+>
       <motion.div
         variants={
           pageVariants
@@ -833,6 +810,10 @@ export default function CampusProfilePage() {
             </button>
           </div>
         </motion.section>
+         <DeleteAccountCard
+          title="Delete campus account"
+          description="Nonaktifkan akses account institusi dari Volunteer Match. Data credential dan volunteer report historis tidak ikut dihapus."
+        />
       </motion.div>
     </DashboardShell>
   );

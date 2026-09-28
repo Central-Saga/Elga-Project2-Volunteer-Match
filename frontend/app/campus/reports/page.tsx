@@ -19,6 +19,7 @@ import {
   getStoredUser,
   type AuthUser,
 } from "@/lib/auth";
+import { adminNavigation } from "@/lib/admin-navigation";
 
 type Student = {
   nim?: string | null;
@@ -62,29 +63,7 @@ type ReportResponse = {
   data: ReportItem[];
   meta: ReportMeta;
 };
-
-const navigation = [
-  {
-    label: "Dashboard",
-    href: "/campus",
-  },
-  {
-    label: "Credentials",
-    href: "/campus/credentials",
-  },
-  {
-    label: "Verify Credential",
-    href: "/campus/verify",
-  },
-  {
-    label: "Reports",
-    href: "/campus/reports",
-  },
-  {
-    label: "Profile",
-    href: "/campus/profile",
-  },
-];
+;
 
 const pageVariants = {
   hidden: {},
@@ -516,13 +495,11 @@ export default function CampusReportsPage() {
   }
 
   return (
-    <DashboardShell
-      user={user}
-      role="campus"
-      navigation={
-        navigation
-      }
-    >
+   <DashboardShell
+  user={user}
+  role="admin"
+  navigation={adminNavigation}
+>
       <motion.div
         variants={
           pageVariants
