@@ -10,7 +10,8 @@ class CredentialVerificationController extends Controller
     {
         $credential = Credential::with([
             'application.project',
-            'application.studentProfile',
+            'application.studentProfile.user',
+            'application.studentProfile.campus',
         ])
             ->where('credential_number', $credentialNumber)
             ->first();
@@ -22,21 +23,38 @@ class CredentialVerificationController extends Controller
             ], 404);
         }
 
+        $studentProfile = $credential
+            ->application
+            ->studentProfile;
+
         if ($credential->status === 'revoked') {
-    return response()->json([
-        'valid' => false,
-        'message' => 'Credential has been revoked.',
-        'data' => [
-            'application_id' => $credential->application_id,
-            'credential_number' => $credential->credential_number,
-            'status' => $credential->status,
-            'title' => $credential->title,
-            'issued_at' => $credential->issued_at,
-            'revoked_at' => $credential->revoked_at,
-            'revocation_reason' => $credential->revocation_reason,
-        ],
-    ]);
-}
+            return response()->json([
+                'valid' => false,
+                'message' => 'Credential has been revoked.',
+                'data' => [
+                    'application_id' => $credential->application_id,
+                    'credential_number' => $credential->credential_number,
+                    'title' => $credential->title,
+                    'issued_at' => $credential->issued_at,
+                    'status' => $credential->status,
+                    'revoked_at' => $credential->revoked_at,
+                    'revocation_reason' => $credential->revocation_reason,
+
+                    'student' => [
+                        'name' => $studentProfile?->user?->name,
+                        'nim' => $studentProfile?->nim,
+                        'study_program' => $studentProfile?->study_program,
+                        'campus' => $studentProfile?->campus?->name,
+                    ],
+
+                    'project' => [
+                        'id' => $credential->application->project->id,
+                        'title' => $credential->application->project->title,
+                        'location' => $credential->application->project->location,
+                    ],
+                ],
+            ]);
+        }
 
         return response()->json([
             'valid' => true,
@@ -47,13 +65,18 @@ class CredentialVerificationController extends Controller
                 'title' => $credential->title,
                 'issued_at' => $credential->issued_at,
                 'status' => $credential->status,
+
+                'student' => [
+                    'name' => $studentProfile?->user?->name,
+                    'nim' => $studentProfile?->nim,
+                    'study_program' => $studentProfile?->study_program,
+                    'campus' => $studentProfile?->campus?->name,
+                ],
+
                 'project' => [
                     'id' => $credential->application->project->id,
                     'title' => $credential->application->project->title,
                     'location' => $credential->application->project->location,
-                ],
-                'student' => [
-                    'study_program' => $credential->application->studentProfile->study_program,
                 ],
             ],
         ]);

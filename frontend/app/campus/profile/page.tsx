@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import DashboardShell from "@/components/layout/DashboardShell";
 import DeleteAccountCard from "@/components/account/DeleteAccountCard";
-import { adminNavigation } from "@/lib/admin-navigation";
+import { campusNavigation } from "@/lib/campus-navigation";
 import { apiFetch } from "@/lib/api";
 import {
   getStoredToken,
@@ -303,8 +303,8 @@ export default function CampusProfilePage() {
   return (
   <DashboardShell
   user={user}
-  role="admin"
-  navigation={adminNavigation}
+  role="campus"
+  navigation={campusNavigation}
 >
       <motion.div
         variants={

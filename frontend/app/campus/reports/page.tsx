@@ -19,7 +19,7 @@ import {
   getStoredUser,
   type AuthUser,
 } from "@/lib/auth";
-import { adminNavigation } from "@/lib/admin-navigation";
+import { campusNavigation } from "@/lib/campus-navigation";
 
 type Student = {
   nim?: string | null;
@@ -497,8 +497,8 @@ export default function CampusReportsPage() {
   return (
    <DashboardShell
   user={user}
-  role="admin"
-  navigation={adminNavigation}
+  role="campus"
+  navigation={campusNavigation}
 >
       <motion.div
         variants={
