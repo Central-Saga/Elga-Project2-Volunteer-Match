@@ -16,6 +16,10 @@ export const adminNavigation = [
     href: "/admin/credentials",
   },
   {
+    label: "Users",
+    href: "/admin/users",
+  },
+  {
     label: "Profile",
     href: "/admin/profile",
   },
