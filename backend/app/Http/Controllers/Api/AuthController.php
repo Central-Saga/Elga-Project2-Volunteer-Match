@@ -6,27 +6,47 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
+    /**
+     * Register a new student account.
+     */
     public function register(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                'unique:users,email',
+            ],
+            'password' => [
+                'required',
+                'confirmed',
+                Password::defaults(),
+            ],
         ]);
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => $validated['password'],
-            'role' => 'student',
-        ]);
+        // User dan token harus berhasil dibuat bersama.
+        [$user, $token] = DB::transaction(function () use ($validated) {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => $validated['password'],
+                'role' => 'student',
+            ]);
 
-        $token = $user->createToken('volunteer-match')->plainTextToken;
+            $token = $user
+                ->createToken('volunteer-match')
+                ->plainTextToken;
+
+            return [$user, $token];
+        });
 
         return response()->json([
             'message' => 'Registration successful.',
@@ -35,6 +55,9 @@ class AuthController extends Controller
         ], 201);
     }
 
+    /**
+     * Authenticate an existing user.
+     */
     public function login(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -42,9 +65,18 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $user = User::where('email', $validated['email'])->first();
+        $user = User::where(
+            'email',
+            $validated['email']
+        )->first();
 
-        if (! $user || ! Hash::check($validated['password'], $user->password)) {
+        if (
+            ! $user ||
+            ! Hash::check(
+                $validated['password'],
+                $user->password
+            )
+        ) {
             return response()->json([
                 'message' => 'Invalid credentials.',
             ], 401);
@@ -56,28 +88,38 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $token = $user->createToken('volunteer-match')->plainTextToken;
+        $token = $user
+            ->createToken('volunteer-match')
+            ->plainTextToken;
 
         return response()->json([
             'message' => 'Login successful.',
             'user' => $user,
             'token' => $token,
-        ]);
+        ], 200);
     }
 
+    /**
+     * Get the authenticated user's information.
+     */
     public function me(Request $request): JsonResponse
     {
         return response()->json([
             'user' => $request->user(),
-        ]);
+        ], 200);
     }
 
+    /**
+     * Logout and revoke the current access token.
+     */
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()?->delete();
+        $request->user()
+            ->currentAccessToken()
+            ?->delete();
 
         return response()->json([
             'message' => 'Logout successful.',
-        ]);
+        ], 200);
     }
 }
