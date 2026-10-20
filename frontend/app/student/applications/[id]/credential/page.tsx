@@ -19,6 +19,11 @@ type Credential = {
   revocation_reason?: string | null;
 };
 
+type CredentialResponse = {
+  message: string;
+  data: Credential;
+};
+
 export default function StudentCredentialDetailPage() {
   const params = useParams();
   const applicationId = params.id as string;
@@ -49,15 +54,15 @@ export default function StudentCredentialDetailPage() {
       return;
     }
 
-    apiFetch<Credential>(
-      `/student/applications/${applicationId}/credential`,
-      {
-        token: token ?? undefined,
-      }
-    )
-      .then((data) => {
-        setCredential(data);
-      })
+    apiFetch<CredentialResponse>(
+  `/student/applications/${applicationId}/credential`,
+  {
+    token: token ?? undefined,
+  }
+  )
+  .then((response) => {
+    setCredential(response.data);
+  })
       .catch((err) => {
         setError(err.message || "Credential tidak dapat dimuat.");
       })

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Campus;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -12,11 +13,16 @@ class AuthTest extends TestCase
 
     public function test_student_can_register(): void
     {
+        $campus = Campus::create(['name' => 'Test Campus', 'code' => 'TEST-REG']);
         $response = $this->postJson('/api/auth/register', [
             'name' => 'Test Student',
             'email' => 'student@example.com',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
+            'role' => 'student',
+            'campus_id' => $campus->id,
+            'nim' => 'TEST-001',
+            'study_program' => 'Informatics',
         ]);
 
         $response->assertStatus(201)

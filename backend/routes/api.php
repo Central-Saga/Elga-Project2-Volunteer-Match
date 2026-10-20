@@ -22,16 +22,44 @@ use App\Http\Controllers\AdminCredentialController;
 use App\Http\Controllers\CampusCredentialController;
 use App\Http\Controllers\CampusCredentialReportController;
 use App\Http\Controllers\AdminNgoVerificationController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\Api\CampusController;
 
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [
+        AuthController::class,
+        'register',
+    ]);
+
+    Route::post('/login', [
+        AuthController::class,
+        'login',
+    ]);
 
     Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/me', [AuthController::class, 'me']);
-        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/me', [
+            AuthController::class,
+            'me',
+        ]);
+
+        Route::post('/logout', [
+            AuthController::class,
+            'logout',
+        ]);
+
+        Route::delete('/account', [
+            AuthController::class,
+            'deleteAccount',
+        ]);
     });
 });
+
+Route::get('/campuses', [
+    CampusController::class,
+    'index',
+]);
+
 
 Route::get(
     '/credentials/verify/{credentialNumber}',
@@ -39,6 +67,21 @@ Route::get(
 );
 
 Route::middleware('auth:sanctum')->group(function () {
+
+    Route::get('/notifications', [
+    NotificationController::class,
+    'index'
+]);
+
+Route::post('/notifications/{notification}/read', [
+    NotificationController::class,
+    'markAsRead'
+]);
+
+Route::post('/notifications/read-all', [
+    NotificationController::class,
+    'markAllAsRead'
+]);
 
     /*
     |--------------------------------------------------------------------------
@@ -105,7 +148,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/credentials',[CampusCredentialReportController::class, 'index']);
         Route::get('/reports/volunteer-activities',[CampusCredentialReportController::class, 'volunteerActivities']);
         Route::get('/reports/volunteer-activities/export',[CampusCredentialReportController::class, 'exportVolunteerActivities']);
-    });
+
+});
 
      /*
     |--------------------------------------------------------------------------
@@ -129,6 +173,10 @@ Route::middleware('auth:sanctum')->group(function () {
         'reject',
     ]);
 
+    Route::get('/credentials',
+    [AdminCredentialController::class, 'index']
+    );
+
     Route::post('/credentials/{credential}/revoke',
         [AdminCredentialController::class, 'revoke'
     ]);
@@ -144,5 +192,31 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ngos/verifications/{verification}/reject',
         [AdminNgoVerificationController::class, 'reject']
     );
+
+    /*
+|--------------------------------------------------------------------------
+| User Management
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/users', [
+    AdminUserController::class,
+    'index',
+]);
+
+Route::post('/users/{user}/suspend', [
+    AdminUserController::class,
+    'suspend',
+]);
+
+Route::post('/users/{user}/activate', [
+    AdminUserController::class,
+    'activate',
+]);
+
+Route::delete('/users/{user}', [
+    AdminUserController::class,
+    'destroy',
+]);
 });
 });

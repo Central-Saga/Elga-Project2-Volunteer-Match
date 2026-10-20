@@ -23,36 +23,95 @@ class StudentProfileController extends Controller
     public function update(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'campus_id' => ['nullable', 'exists:campuses,id'],
-            'nim' => ['nullable', 'string', 'max:100'],
-            'study_program' => ['nullable', 'string', 'max:255'],
-            'interests' => ['nullable', 'array'],
-            'interests.*' => ['string', 'max:100'],
-            'skills' => ['nullable', 'array'],
-            'skills.*' => ['string', 'max:100'],
-            'availability' => ['nullable', 'array'],
-            'location' => ['nullable', 'string', 'max:255'],
+            'campus_id' => [
+                'nullable',
+                'exists:campuses,id',
+            ],
+
+            'nim' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'study_program' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'bio' => [
+                'nullable',
+                'string',
+                'max:1000',
+            ],
+
+            'avatar_url' => [
+                'nullable',
+                'string',
+                'max:2048',
+            ],
+
+            'interests' => [
+                'nullable',
+                'array',
+                'max:20',
+            ],
+
+            'interests.*' => [
+                'string',
+                'max:100',
+            ],
+
+            'skills' => [
+                'nullable',
+                'array',
+                'max:20',
+            ],
+
+            'skills.*' => [
+                'string',
+                'max:100',
+            ],
+
+            'availability' => [
+                'nullable',
+                'array',
+            ],
+
+            'location' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
         ]);
 
         $profile = StudentProfile::updateOrCreate(
-            ['user_id' => $request->user()->id],
-            $validated
+            [
+                'user_id' => $request->user()->id,
+            ],
+            $validated,
         );
 
         $this->updateProfileCompletion($profile);
 
         return response()->json([
             'message' => 'Student profile saved successfully.',
-            'profile' => $profile->load('campus'),
+            'profile' => $profile
+                ->fresh()
+                ->load('campus'),
         ]);
     }
 
-    private function updateProfileCompletion(StudentProfile $profile): void
-    {
+    private function updateProfileCompletion(
+        StudentProfile $profile,
+    ): void {
         $fields = [
             'campus_id',
             'nim',
             'study_program',
+            'bio',
+            'avatar_url',
             'interests',
             'skills',
             'availability',
@@ -62,17 +121,25 @@ class StudentProfileController extends Controller
         $filled = 0;
 
         foreach ($fields as $field) {
-            $value = $profile->{$field};
+            $value =
+                $profile->{$field};
 
-            if ($value !== null && $value !== '' && $value !== []) {
+            if (
+                $value !== null &&
+                $value !== '' &&
+                $value !== []
+            ) {
                 $filled++;
             }
         }
 
-        $completion = (int) round(($filled / count($fields)) * 100);
+        $completion = (int) round(
+            ($filled / count($fields)) * 100,
+        );
 
         $profile->update([
-            'profile_completion' => $completion,
+            'profile_completion' =>
+                $completion,
         ]);
     }
 }

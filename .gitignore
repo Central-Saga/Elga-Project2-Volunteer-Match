@@ -1,0 +1,13 @@
+**/node_modules/
+**/vendor/
+**/.next/
+**/build/
+**/dist/
+.DS_Store
+Thumbs.db
+*Zone.Identifier*
+*.log
+.env
+.env.local
+.env.production
+.env.backup

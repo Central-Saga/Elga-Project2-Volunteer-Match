@@ -32,6 +32,45 @@ class StudentAttendanceController extends Controller
             ], 422);
         }
 
+        $project = $application->project;
+
+        if (!$project) {
+            return response()->json([
+                'message' => 'Project not found.',
+            ], 404);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check-in Window
+        |--------------------------------------------------------------------------
+        |
+        | Check-in dibuka 30 menit sebelum project dimulai
+        | dan ditutup ketika project selesai.
+        |
+        */
+
+        $now = now();
+
+        $checkInOpensAt = $project->start_at
+            ->copy()
+            ->subMinutes(30);
+
+        $checkInClosesAt = $project->end_at;
+
+        if ($now->lt($checkInOpensAt)) {
+            return response()->json([
+                'message' => 'Check-in is not open yet.',
+                'check_in_opens_at' => $checkInOpensAt,
+            ], 422);
+        }
+
+        if ($now->gt($checkInClosesAt)) {
+            return response()->json([
+                'message' => 'Check-in period has ended.',
+            ], 422);
+        }
+
         // Cegah check-in dua kali
         $existingAttendance = $application->attendance;
 
@@ -50,7 +89,7 @@ class StudentAttendanceController extends Controller
 
         return response()->json([
             'message' => 'Check-in successful.',
-            'data' => $attendance->load('application'),
+            'data' => $attendance,
         ], 201);
     }
 

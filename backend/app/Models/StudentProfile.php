@@ -11,15 +11,17 @@ class StudentProfile extends Model
     protected $fillable = [
         'user_id',
         'campus_id',
-        'student_id',
+        'nim',
         'faculty',
         'study_program',
         'semester',
         'bio',
+        'avatar_url',
         'skills',
         'interests',
         'availability',
         'location',
+        'profile_completion',
     ];
 
     protected $casts = [

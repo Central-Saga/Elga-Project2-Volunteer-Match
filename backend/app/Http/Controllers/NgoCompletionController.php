@@ -52,12 +52,23 @@ class NgoCompletionController extends Controller
         }
 
         $validated = $request->validate([
-            'notes' => ['nullable', 'string', 'max:2000'],
+            'total_hours' => [
+                'required',
+                'numeric',
+                'min:0.5',
+                'max:1000',
+            ],
+            'notes' => [
+                'nullable',
+                'string',
+                'max:2000',
+            ],
         ]);
 
         $completion = Completion::create([
             'application_id' => $application->id,
             'status' => 'confirmed',
+            'total_hours' => $validated['total_hours'],
             'confirmed_at' => now(),
             'notes' => $validated['notes'] ?? null,
         ]);

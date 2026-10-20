@@ -6,6 +6,7 @@ use App\Models\Application;
 use App\Models\Credential;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Models\Notification;
 
 class NgoCredentialController extends Controller
 {
@@ -67,6 +68,19 @@ class NgoCredentialController extends Controller
             'title' => 'Volunteer Participation Certificate',
             'issued_at' => now(),
             'status' => 'active',
+        ]);
+
+        Notification::create([
+            'user_id' => $application->studentProfile->user_id,
+            'type' => 'credential_issued',
+            'title' => 'Credential Issued',
+            'message' => 'Your credential for ' . $application->project->title . ' has been issued.',
+            'data' => [
+                'application_id' => $application->id,
+                'project_id' => $application->project_id,
+                'credential_id' => $credential->id,
+                'credential_number' => $credential->credential_number,
+            ],
         ]);
 
         return response()->json([
