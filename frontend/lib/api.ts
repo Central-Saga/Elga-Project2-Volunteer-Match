@@ -1,3 +1,6 @@
+
+import { getStoredToken, logoutUser } from "./auth";
+
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -27,9 +30,24 @@ export async function apiFetch<T>(
 
   const data = await response.json().catch(() => null);
 
+  // Handle expired or invalid authenticated sessions
+  if (response.status === 401 && token) {
+    if (
+      typeof window !== "undefined" &&
+      getStoredToken() === token
+    ) {
+      logoutUser();
+
+      if (window.location.pathname !== "/login") {
+        window.location.replace("/login");
+      }
+    }
+  }
+
   if (!response.ok) {
     throw new Error(
-      data?.message || `Request failed with status ${response.status}`,
+      data?.message ||
+        `Request failed with status ${response.status}`,
     );
   }
 
