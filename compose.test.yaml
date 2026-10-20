@@ -1,0 +1,51 @@
+name: volunteer-match-issue5-test
+
+services:
+  pgsql-test:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: volunteer_match_test
+      POSTGRES_USER: test_runner
+      POSTGRES_PASSWORD: local_test_password
+    volumes:
+      - test-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_runner -d volunteer_match_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    working_dir: /var/www/html
+    environment:
+      APP_ENV: testing
+      APP_DEBUG: "false"
+      APP_KEY: "base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+      DB_CONNECTION: pgsql
+      DB_HOST: pgsql-test
+      DB_PORT: "5432"
+      DB_DATABASE: volunteer_match_test
+      DB_USERNAME: test_runner
+      DB_PASSWORD: local_test_password
+      DB_URL: ""
+    volumes:
+      - ./backend:/var/www/html
+      - test-vendor:/var/www/html/vendor
+    depends_on:
+      pgsql-test:
+        condition: service_healthy
+    command:
+      - sh
+      - -lc
+      - |
+        set -e
+        if [ ! -f .env ]; then cp .env.example .env; fi
+        composer install --no-interaction --prefer-dist --no-progress
+        php artisan test
+
+volumes:
+  test-db-data:
+  test-vendor:

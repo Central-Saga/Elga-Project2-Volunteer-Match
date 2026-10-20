@@ -75,7 +75,7 @@ class AuthController extends Controller
             ],
         ]);
 
-        $user = DB::transaction(function () use ($validated) {
+        [$user, $token] = DB::transaction(function () use ($validated) {
             /*
             |--------------------------------------------------------------------------
             | Create User
@@ -136,12 +136,12 @@ class AuthController extends Controller
                 ]);
             }
 
-            return $user;
-        });
+            $token = $user
+                ->createToken('auth-token')
+                ->plainTextToken;
 
-        $token = $user
-            ->createToken('auth-token')
-            ->plainTextToken;
+            return [$user, $token];
+        });
 
         return response()->json([
             'message' => 'Registration successful.',
