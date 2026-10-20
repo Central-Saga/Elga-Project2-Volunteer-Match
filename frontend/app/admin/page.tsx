@@ -93,6 +93,7 @@ export default function AdminDashboardPage() {
 
   const [error, setError] =
     useState("");
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const token = getStoredToken();
@@ -109,6 +110,8 @@ export default function AdminDashboardPage() {
     }
 
     setUser(storedUser);
+    setLoading(true);
+    setError("");
 
     async function loadDashboard(
       authToken: string,
@@ -164,7 +167,7 @@ export default function AdminDashboardPage() {
     }
 
     loadDashboard(token);
-  }, [router]);
+  }, [router, retryCount]);
 
   const activeCredentials =
     useMemo(() => {
@@ -430,6 +433,14 @@ export default function AdminDashboardPage() {
             <p className="mt-1 text-sm text-red-600">
               {error}
             </p>
+
+            <button
+              type="button"
+              onClick={() => setRetryCount((count) => count + 1)}
+              className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            >
+              Coba Lagi
+            </button>
           </motion.div>
         )}
 

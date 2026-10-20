@@ -105,6 +105,7 @@ export default function CampusDashboardPage() {
 
   const [error, setError] =
     useState("");
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const token = getStoredToken();
@@ -121,6 +122,8 @@ export default function CampusDashboardPage() {
     }
 
     setUser(storedUser);
+    setLoading(true);
+    setError("");
 
     async function loadDashboard(
       authToken: string,
@@ -176,7 +179,7 @@ export default function CampusDashboardPage() {
     }
 
     loadDashboard(token);
-  }, [router]);
+  }, [router, retryCount]);
 
   const activeCredentials =
     useMemo(() => {
@@ -475,6 +478,14 @@ export default function CampusDashboardPage() {
             <p className="mt-1 text-sm text-red-600">
               {error}
             </p>
+
+            <button
+              type="button"
+              onClick={() => setRetryCount((count) => count + 1)}
+              className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            >
+              Coba Lagi
+            </button>
           </motion.div>
         )}
 
@@ -626,6 +637,23 @@ export default function CampusDashboardPage() {
                   tone="red"
                 />
               </div>
+
+{!error && credentials.length === 0 && (
+  <div
+    role="status"
+    className="mt-5 rounded-xl border border-[#eeeaf5] bg-[#faf9fd] px-5 py-4 text-center"
+  >
+    <p className="text-sm font-semibold text-[#171321]">
+      Belum ada credential
+    </p>
+
+    <p className="mt-2 text-sm text-[#786d83]">
+      Belum ada credential mahasiswa yang tercatat.
+      Data akan muncul setelah credential tersedia.
+    </p>
+  </div>
+)}
+
             </div>
 
             {/* CAMPUS PROFILE */}
