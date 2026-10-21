@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\StudentProfile;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Support\ApiPagination;
 
 class StudentProjectController extends Controller
 {
@@ -44,9 +45,11 @@ class StudentProjectController extends Controller
             ->sortByDesc('match_score')
             ->values();
 
+        $paginated = ApiPagination::collection($request, $projects);
+
         return response()->json([
             'message' => 'Published projects retrieved successfully.',
-            'data' => $projects,
+            ...$paginated,
         ]);
     }
 
