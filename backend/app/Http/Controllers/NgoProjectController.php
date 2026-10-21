@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use Illuminate\Http\Request;
+use App\Support\ApiPagination;
 
 class NgoProjectController extends Controller
 {
@@ -11,13 +12,14 @@ class NgoProjectController extends Controller
     {
         $ngoProfile = $request->user()->ngoProfile;
 
-        $projects = $ngoProfile->projects()
-            ->latest()
-            ->get();
+        $paginated = ApiPagination::query(
+            $request,
+            $ngoProfile->projects()->latest()
+        );
 
         return response()->json([
             'message' => 'Projects retrieved successfully.',
-            'data' => $projects,
+            ...$paginated,
         ]);
     }
 

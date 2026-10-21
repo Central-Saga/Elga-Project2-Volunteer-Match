@@ -4,19 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use Illuminate\Http\Request;
+use App\Support\ApiPagination;
 
 class AdminProjectReviewController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $projects = Project::with('ngoProfile')
-            ->where('status', 'submitted')
-            ->latest()
-            ->get();
+        $paginated = ApiPagination::query(
+            $request,
+            Project::with('ngoProfile')
+                ->where('status', 'submitted')
+                ->latest()
+        );
 
         return response()->json([
             'message' => 'Submitted projects retrieved successfully.',
-            'data' => $projects,
+            ...$paginated,
         ]);
     }
 
