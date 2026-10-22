@@ -105,16 +105,22 @@ Jalankan pengujian Laravel menggunakan database test terpisah:
 
 Pengujian berhasil apabila command selesai dengan exit code 0.
 
-## Screenshot
+## Screenshots
 
-Tambahkan screenshot asli aplikasi di:
+### Login
+![Volunteer Match Login](docs/screenshots/login.png)
 
-- `docs/screenshots/login.png`
-- `docs/screenshots/student-dashboard.png`
-- `docs/screenshots/ngo-projects.png`
-- `docs/screenshots/admin-review.png`
+### NGO Dashboard
+![NGO Dashboard](docs/screenshots/ngo-dashboard.png)
 
-Screenshot belum disertakan dan harus diambil dari aplikasi yang berjalan. Jangan sertakan token atau data pribadi.
+### NGO Project Management
+![NGO Projects](docs/screenshots/ngo-projects.png)
+
+### Student Activity
+![Student Activity](docs/screenshots/student-activity.png)
+
+### Credential Verification
+![Credential Verification](docs/screenshots/credential-verification.png)
 
 ## Troubleshooting
 
