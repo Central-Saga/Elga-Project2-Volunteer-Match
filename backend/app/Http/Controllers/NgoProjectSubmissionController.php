@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Http\Resources\ProjectResource;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
 
 class NgoProjectSubmissionController extends Controller
@@ -17,12 +19,7 @@ class NgoProjectSubmissionController extends Controller
             ], 404);
         }
 
-        // Pastikan project memang milik NGO yang sedang login
-        if ($project->ngo_profile_id !== $ngoProfile->id) {
-            return response()->json([
-                'message' => 'You are not allowed to submit this project.',
-            ], 403);
-        }
+        Gate::authorize('submit', $project);
 
         if ($ngoProfile->verification_status !== 'approved') {
             return response()->json([
@@ -44,7 +41,7 @@ class NgoProjectSubmissionController extends Controller
 
         return response()->json([
             'message' => 'Project submitted successfully and is waiting for review.',
-            'data' => $project->fresh(),
+            'data' => (new ProjectResource($project->fresh()))->resolve($request),
         ]);
     }
 }
