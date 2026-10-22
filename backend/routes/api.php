@@ -119,6 +119,7 @@ Route::post('/notifications/read-all', [
 
     Route::get('/projects', [NgoProjectController::class, 'index']);
     Route::post('/projects', [NgoProjectController::class, 'store']);
+    Route::patch('/projects/{project}', [NgoProjectController::class, 'update']);
 
     Route::post('/projects/{project}/submit',[NgoProjectSubmissionController::class, 'submit']);
 

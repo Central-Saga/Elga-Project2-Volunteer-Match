@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Http\Requests\StoreProjectRequest;
+use App\Http\Requests\UpdateProjectRequest;
+use App\Http\Resources\ProjectResource;
 use Illuminate\Http\Request;
 use App\Support\ApiPagination;
 
@@ -17,46 +20,21 @@ class NgoProjectController extends Controller
             $ngoProfile->projects()->latest()
         );
 
+        $paginated['data'] = ProjectResource::collection(
+            $paginated['data']
+        )->resolve($request);
+
         return response()->json([
             'message' => 'Projects retrieved successfully.',
             ...$paginated,
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreProjectRequest $request)
     {
         $ngoProfile = $request->user()->ngoProfile;
 
-        if (!$ngoProfile) {
-            return response()->json([
-                'message' => 'NGO profile not found.',
-            ], 404);
-        }
-
-        if ($ngoProfile->verification_status !== 'approved') {
-            return response()->json([
-                'message' => 'NGO verification must be approved before creating a project.',
-            ], 403);
-        }
-
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['required', 'string'],
-            'location' => ['nullable', 'string', 'max:255'],
-
-            'start_at' => ['required', 'date'],
-            'end_at' => ['required', 'date', 'after:start_at'],
-
-            'capacity' => ['required', 'integer', 'min:1'],
-
-            'required_skills' => ['nullable', 'array'],
-            'required_skills.*' => ['string', 'max:100'],
-
-            'required_interests' => ['nullable', 'array'],
-            'required_interests.*' => ['string', 'max:100'],
-
-            'risk_level' => ['required', 'in:low,medium,high'],
-        ]);
+        $validated = $request->validated();
 
         $project = $ngoProfile->projects()->create([
             'title' => $validated['title'],
@@ -75,7 +53,17 @@ class NgoProjectController extends Controller
 
         return response()->json([
             'message' => 'Project created successfully.',
-            'data' => $project,
+            'data' => (new ProjectResource($project))->resolve($request),
         ], 201);
+    }
+
+    public function update(UpdateProjectRequest $request, Project $project)
+    {
+        $project->update($request->validated());
+
+        return response()->json([
+            'message' => 'Project updated successfully.',
+            'data' => (new ProjectResource($project->fresh()))->resolve($request),
+        ]);
     }
 }
