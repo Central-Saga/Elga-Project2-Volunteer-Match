@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateStudentProfileRequest;
+use App\Http\Resources\StudentProfileResource;
 use App\Models\StudentProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,75 +18,13 @@ class StudentProfileController extends Controller
             ->first();
 
         return response()->json([
-            'profile' => $profile,
+            'profile' => $profile ? (new StudentProfileResource($profile))->resolve($request) : null,
         ]);
     }
 
-    public function update(Request $request): JsonResponse
+    public function update(UpdateStudentProfileRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'campus_id' => [
-                'nullable',
-                'exists:campuses,id',
-            ],
-
-            'nim' => [
-                'nullable',
-                'string',
-                'max:100',
-            ],
-
-            'study_program' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'bio' => [
-                'nullable',
-                'string',
-                'max:1000',
-            ],
-
-            'avatar_url' => [
-                'nullable',
-                'string',
-                'max:2048',
-            ],
-
-            'interests' => [
-                'nullable',
-                'array',
-                'max:20',
-            ],
-
-            'interests.*' => [
-                'string',
-                'max:100',
-            ],
-
-            'skills' => [
-                'nullable',
-                'array',
-                'max:20',
-            ],
-
-            'skills.*' => [
-                'string',
-                'max:100',
-            ],
-
-            'availability' => [
-                'nullable',
-                'array',
-            ],
-
-            'location' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $profile = StudentProfile::updateOrCreate(
             [
@@ -97,9 +37,9 @@ class StudentProfileController extends Controller
 
         return response()->json([
             'message' => 'Student profile saved successfully.',
-            'profile' => $profile
-                ->fresh()
-                ->load('campus'),
+            'profile' => (new StudentProfileResource(
+                $profile->fresh()->load('campus')
+            ))->resolve($request),
         ]);
     }
 

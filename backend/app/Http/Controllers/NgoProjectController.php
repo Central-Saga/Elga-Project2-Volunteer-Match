@@ -6,12 +6,12 @@ use App\Models\Project;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
-use Illuminate\Http\Request;
+use App\Http\Requests\PaginationRequest;
 use App\Support\ApiPagination;
 
 class NgoProjectController extends Controller
 {
-    public function index(Request $request)
+    public function index(PaginationRequest $request)
     {
         $ngoProfile = $request->user()->ngoProfile;
 

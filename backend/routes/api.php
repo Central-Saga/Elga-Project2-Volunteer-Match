@@ -26,6 +26,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\Api\CampusController;
 
+$registerApiRoutes = function (): void {
 Route::prefix('auth')->group(function () {
     Route::post('/register', [
         AuthController::class,
@@ -221,3 +222,7 @@ Route::delete('/users/{user}', [
 ]);
 });
 });
+};
+
+Route::prefix('v1')->group($registerApiRoutes);
+$registerApiRoutes();

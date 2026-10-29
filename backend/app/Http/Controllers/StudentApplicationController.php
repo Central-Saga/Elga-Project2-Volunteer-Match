@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\Project;
+use App\Http\Requests\StoreApplicationRequest;
+use App\Http\Resources\ApplicationResource;
 use Illuminate\Http\Request;
 use App\Models\Notification;
 
 class StudentApplicationController extends Controller
 {
-    public function store(Request $request, Project $project)
+    public function store(StoreApplicationRequest $request, Project $project)
     {
         $studentProfile = $request->user()->studentProfile;
 
@@ -38,7 +40,7 @@ class StudentApplicationController extends Controller
         if ($existingApplication) {
             return response()->json([
                 'message' => 'You have already applied to this project.',
-                'data' => $existingApplication,
+                'data' => (new ApplicationResource($existingApplication))->resolve($request),
             ], 409);
         }
 
@@ -52,9 +54,7 @@ class StudentApplicationController extends Controller
             ], 422);
         }
 
-        $validated = $request->validate([
-            'motivation' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $validated = $request->validated();
 
         $application = Application::create([
             'project_id' => $project->id,
@@ -77,10 +77,10 @@ class StudentApplicationController extends Controller
 
         return response()->json([
             'message' => 'Application submitted successfully.',
-            'data' => $application->load([
+            'data' => (new ApplicationResource($application->load([
                 'project',
                 'studentProfile',
-            ]),
+            ])))->resolve($request),
         ], 201);
     }
 
@@ -101,7 +101,7 @@ class StudentApplicationController extends Controller
 
         return response()->json([
             'message' => 'Applications retrieved successfully.',
-            'data' => $applications,
+            'data' => ApplicationResource::collection($applications)->resolve($request),
         ]);
     }
 }

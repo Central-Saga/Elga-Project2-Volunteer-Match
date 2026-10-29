@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateCampusProfileRequest;
+use App\Http\Resources\CampusProfileResource;
 use App\Models\CampusProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,16 +18,13 @@ class CampusProfileController extends Controller
             ->first();
 
         return response()->json([
-            'profile' => $profile,
+            'profile' => $profile ? (new CampusProfileResource($profile))->resolve($request) : null,
         ]);
     }
 
-    public function update(Request $request): JsonResponse
+    public function update(UpdateCampusProfileRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'campus_id' => ['required', 'exists:campuses,id'],
-            'position' => ['nullable', 'string', 'max:255'],
-        ]);
+        $validated = $request->validated();
 
         $profile = CampusProfile::updateOrCreate(
             ['user_id' => $request->user()->id],
@@ -34,7 +33,7 @@ class CampusProfileController extends Controller
 
         return response()->json([
             'message' => 'Campus profile saved successfully.',
-            'profile' => $profile->load('campus'),
+            'profile' => (new CampusProfileResource($profile->load('campus')))->resolve($request),
         ]);
     }
 }

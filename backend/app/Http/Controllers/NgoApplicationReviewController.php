@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Application;
+use App\Http\Requests\RejectApplicationRequest;
+use App\Http\Resources\ApplicationResource;
 use Illuminate\Http\Request;
 use App\Models\Notification;
+use Illuminate\Support\Facades\Gate;
 
 
 class NgoApplicationReviewController extends Controller
@@ -19,12 +22,7 @@ class NgoApplicationReviewController extends Controller
             ], 404);
         }
 
-        // Pastikan application berasal dari project milik NGO yang login
-        if ($application->project->ngo_profile_id !== $ngoProfile->id) {
-            return response()->json([
-                'message' => 'You are not allowed to review this application.',
-            ], 403);
-        }
+        Gate::authorize('review', $application);
 
         // Hanya application pending yang boleh diterima
         if ($application->status !== 'pending') {
@@ -63,14 +61,14 @@ class NgoApplicationReviewController extends Controller
 
         return response()->json([
             'message' => 'Application accepted successfully.',
-            'data' => $application->fresh()->load([
+            'data' => (new ApplicationResource($application->fresh()->load([
                 'project',
                 'studentProfile',
-            ]),
+            ])))->resolve($request),
         ]);
     }
 
-    public function reject(Request $request, Application $application)
+    public function reject(RejectApplicationRequest $request, Application $application)
     {
         $ngoProfile = $request->user()->ngoProfile;
 
@@ -80,12 +78,7 @@ class NgoApplicationReviewController extends Controller
             ], 404);
         }
 
-        // Pastikan application berasal dari project milik NGO yang login
-        if ($application->project->ngo_profile_id !== $ngoProfile->id) {
-            return response()->json([
-                'message' => 'You are not allowed to review this application.',
-            ], 403);
-        }
+        Gate::authorize('review', $application);
 
         if ($application->status !== 'pending') {
             return response()->json([
@@ -93,14 +86,7 @@ class NgoApplicationReviewController extends Controller
             ], 422);
         }
 
-        $validated = $request->validate([
-            'rejection_reason' => [
-                'required',
-                'string',
-                'min:5',
-                'max:2000',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $application->update([
             'status' => 'rejected',
@@ -122,10 +108,10 @@ class NgoApplicationReviewController extends Controller
 
         return response()->json([
             'message' => 'Application rejected successfully.',
-            'data' => $application->fresh()->load([
+            'data' => (new ApplicationResource($application->fresh()->load([
                 'project',
                 'studentProfile',
-            ]),
+            ])))->resolve($request),
         ]);
     }
 }

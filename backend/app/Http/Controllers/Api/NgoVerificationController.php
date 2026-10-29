@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SubmitNgoVerificationRequest;
+use App\Http\Resources\VerificationRecordResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -26,11 +28,13 @@ class NgoVerificationController extends Controller
         return response()->json([
             'verification_status' => $ngo->verification_status,
             'verification_tier' => $ngo->verification_tier,
-            'verification' => $verification,
+            'verification' => $verification
+                ? (new VerificationRecordResource($verification))->resolve($request)
+                : null,
         ]);
     }
 
-    public function submit(Request $request): JsonResponse
+    public function submit(SubmitNgoVerificationRequest $request): JsonResponse
     {
         $ngo = $request->user()->ngoProfile;
 
@@ -59,7 +63,7 @@ class NgoVerificationController extends Controller
         if ($pendingVerification) {
             return response()->json([
                 'message' => 'Verification has already been submitted and is waiting for admin review.',
-                'verification' => $pendingVerification,
+                'verification' => (new VerificationRecordResource($pendingVerification))->resolve($request),
             ], 409);
         }
 
@@ -78,7 +82,9 @@ class NgoVerificationController extends Controller
 
             return response()->json([
                 'message' => 'This NGO has already been verified.',
-                'verification' => $approvedVerification,
+                'verification' => $approvedVerification
+                    ? (new VerificationRecordResource($approvedVerification))->resolve($request)
+                    : null,
             ], 409);
         }
 
@@ -88,19 +94,7 @@ class NgoVerificationController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $validated = $request->validate([
-            'evidence_reference' => [
-                'required',
-                'string',
-                'max:2000',
-            ],
-
-            'notes' => [
-                'nullable',
-                'string',
-                'max:2000',
-            ],
-        ]);
+        $validated = $request->validated();
 
         /*
         |--------------------------------------------------------------------------
@@ -142,7 +136,7 @@ class NgoVerificationController extends Controller
         return response()->json([
             'message' => 'NGO verification submitted successfully.',
             'verification_status' => 'submitted',
-            'verification' => $verification,
+            'verification' => (new VerificationRecordResource($verification))->resolve($request),
         ], 201);
     }
 }

@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Application;
 use App\Models\NgoProfile;
 use App\Models\Project;
+use App\Models\StudentProfile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -48,6 +50,28 @@ class NgoProjectAuthorizationTest extends TestCase
             'risk_level' => 'low',
             'status' => 'draft',
         ]);
+    }
+
+    private function asStudent(): StudentProfile
+    {
+        $this->sequence++;
+
+        $user = User::create([
+            'name' => 'Student '.$this->sequence,
+            'email' => 'issue2-student'.$this->sequence.'@example.com',
+            'password' => 'Password123!',
+            'role' => 'student',
+        ]);
+
+        $profile = StudentProfile::create([
+            'user_id' => $user->id,
+            'nim' => 'ISSUE2-'.$this->sequence,
+            'study_program' => 'Informatics',
+        ]);
+
+        Sanctum::actingAs($user);
+
+        return $profile;
     }
 
     public function test_approved_ngo_can_create_project_with_resource_response(): void
@@ -170,5 +194,41 @@ class NgoProjectAuthorizationTest extends TestCase
             ->assertJsonPath('meta.per_page', 1)
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.title', 'Beach Cleanup');
+    }
+
+    public function test_invalid_application_input_returns_standard_validation_error(): void
+    {
+        $project = $this->makeDraft($this->asNgo());
+        $project->update(['status' => 'published']);
+        $this->asStudent();
+
+        $this->postJson('/api/student/projects/'.$project->id.'/apply', [
+            'motivation' => ['not', 'a', 'string'],
+        ])->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonStructure(['errors' => ['motivation']]);
+    }
+
+    public function test_ngo_cannot_reject_another_ngo_application(): void
+    {
+        $project = $this->makeDraft($this->asNgo());
+        $student = $this->asStudent();
+        $application = Application::create([
+            'project_id' => $project->id,
+            'student_profile_id' => $student->id,
+            'status' => 'pending',
+        ]);
+
+        $this->asNgo();
+
+        $this->postJson('/api/ngo/applications/'.$application->id.'/reject', [
+            'rejection_reason' => 'Not a suitable match.',
+        ])->assertForbidden()
+            ->assertJsonPath('success', false);
+
+        $this->assertDatabaseHas('applications', [
+            'id' => $application->id,
+            'status' => 'pending',
+        ]);
     }
 }

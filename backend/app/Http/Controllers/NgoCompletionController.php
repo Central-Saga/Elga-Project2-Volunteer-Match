@@ -4,29 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\Completion;
-use Illuminate\Http\Request;
+use App\Http\Requests\ConfirmCompletionRequest;
+use App\Http\Resources\CompletionResource;
 
 class NgoCompletionController extends Controller
 {
-    public function confirm(Request $request, Application $application)
+    public function confirm(ConfirmCompletionRequest $request, Application $application)
     {
-        $ngoProfile = $request->user()->ngoProfile;
-
-        if (!$ngoProfile) {
-            return response()->json([
-                'message' => 'NGO profile not found.',
-            ], 404);
-        }
-
-        $project = $application->project;
-
-        // Pastikan application berasal dari project milik NGO yang login
-        if ($project->ngo_profile_id !== $ngoProfile->id) {
-            return response()->json([
-                'message' => 'You are not allowed to confirm this completion.',
-            ], 403);
-        }
-
         // Hanya application accepted yang bisa diselesaikan
         if ($application->status !== 'accepted') {
             return response()->json([
@@ -51,19 +35,7 @@ class NgoCompletionController extends Controller
             ], 409);
         }
 
-        $validated = $request->validate([
-            'total_hours' => [
-                'required',
-                'numeric',
-                'min:0.5',
-                'max:1000',
-            ],
-            'notes' => [
-                'nullable',
-                'string',
-                'max:2000',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $completion = Completion::create([
             'application_id' => $application->id,
@@ -75,10 +47,10 @@ class NgoCompletionController extends Controller
 
         return response()->json([
             'message' => 'Completion confirmed successfully.',
-            'data' => $completion->load([
+            'data' => (new CompletionResource($completion->load([
                 'application.project',
                 'application.studentProfile',
-            ]),
+            ])))->resolve($request),
         ], 201);
     }
 }

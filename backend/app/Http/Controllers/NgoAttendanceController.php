@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Http\Resources\AttendanceResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class NgoAttendanceController extends Controller
 {
@@ -11,23 +13,7 @@ class NgoAttendanceController extends Controller
         Request $request,
         Attendance $attendance
     ) {
-        $ngoProfile = $request->user()->ngoProfile;
-
-        if (!$ngoProfile) {
-            return response()->json([
-                'message' => 'NGO profile not found.',
-            ], 404);
-        }
-
-        $application = $attendance->application;
-        $project = $application->project;
-
-        // Pastikan attendance berasal dari project milik NGO yang login
-        if ($project->ngo_profile_id !== $ngoProfile->id) {
-            return response()->json([
-                'message' => 'You are not allowed to validate this attendance.',
-            ], 403);
-        }
+        Gate::authorize('validateAttendance', $attendance);
 
         // Hanya attendance checked_in yang bisa divalidasi
         if ($attendance->status !== 'checked_in') {
@@ -43,10 +29,10 @@ class NgoAttendanceController extends Controller
 
         return response()->json([
             'message' => 'Attendance validated successfully.',
-            'data' => $attendance->fresh()->load([
+            'data' => (new AttendanceResource($attendance->fresh()->load([
                 'application.project',
                 'application.studentProfile',
-            ]),
+            ])))->resolve($request),
         ]);
     }
 }

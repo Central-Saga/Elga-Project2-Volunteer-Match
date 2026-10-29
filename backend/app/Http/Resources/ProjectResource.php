@@ -29,6 +29,18 @@ class ProjectResource extends JsonResource
                 'ngoProfile',
                 fn () => $this->ngoProfile?->toArray()
             ),
+            'match_score' => $this->when(
+                isset($this->resource->match_score),
+                $this->resource->match_score
+            ),
+            'match_breakdown' => $this->when(
+                isset($this->resource->match_breakdown),
+                $this->resource->match_breakdown
+            ),
+            'match_reasons' => $this->when(
+                isset($this->resource->match_reasons),
+                $this->resource->match_reasons
+            ),
         ];
     }
 }

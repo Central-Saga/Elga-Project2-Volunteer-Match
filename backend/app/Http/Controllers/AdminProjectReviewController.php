@@ -3,12 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
-use Illuminate\Http\Request;
+use App\Http\Requests\PaginationRequest;
+use App\Http\Requests\RejectProjectRequest;
+use App\Http\Resources\ProjectResource;
 use App\Support\ApiPagination;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class AdminProjectReviewController extends Controller
 {
-    public function index(Request $request)
+    public function index(PaginationRequest $request)
     {
         $paginated = ApiPagination::query(
             $request,
@@ -17,14 +21,18 @@ class AdminProjectReviewController extends Controller
                 ->latest()
         );
 
+        $paginated['data'] = ProjectResource::collection($paginated['data'])->resolve($request);
+
         return response()->json([
             'message' => 'Submitted projects retrieved successfully.',
             ...$paginated,
         ]);
     }
 
-    public function approve(Project $project)
+    public function approve(Request $request, Project $project)
     {
+        Gate::authorize('approve', $project);
+
         if ($project->status !== 'submitted') {
             return response()->json([
                 'message' => 'Only submitted projects can be approved.',
@@ -44,26 +52,21 @@ class AdminProjectReviewController extends Controller
 
         return response()->json([
             'message' => 'Project approved and published successfully.',
-            'data' => $project->fresh(),
+            'data' => (new ProjectResource($project->fresh()))->resolve($request),
         ]);
     }
 
-    public function reject(Request $request, Project $project)
+    public function reject(RejectProjectRequest $request, Project $project)
     {
+        Gate::authorize('reject', $project);
+
         if ($project->status !== 'submitted') {
             return response()->json([
                 'message' => 'Only submitted projects can be rejected.',
             ], 422);
         }
 
-        $validated = $request->validate([
-            'rejection_reason' => [
-                'required',
-                'string',
-                'min:5',
-                'max:2000',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $project->update([
             'status' => 'rejected',
@@ -72,7 +75,7 @@ class AdminProjectReviewController extends Controller
 
         return response()->json([
             'message' => 'Project rejected successfully.',
-            'data' => $project->fresh(),
+            'data' => (new ProjectResource($project->fresh()))->resolve($request),
         ]);
     }
 }

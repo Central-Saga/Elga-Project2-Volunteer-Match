@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
-class NormalizeApiErrorResponse
+class NormalizeApiResponse
 {
     public function handle(Request $request, Closure $next): Response
     {
@@ -15,6 +15,28 @@ class NormalizeApiErrorResponse
         $status = $response->getStatusCode();
 
         if ($status < 400) {
+            if ($response instanceof JsonResponse) {
+                $payload = $response->getData(true);
+                $payload = is_array($payload) ? $payload : ['data' => $payload];
+
+                if (! array_key_exists('data', $payload)) {
+                    $payload['data'] = array_diff_key($payload, [
+                        'success' => true,
+                        'message' => true,
+                        'errors' => true,
+                        'meta' => true,
+                    ]) ?: (object) [];
+                }
+
+                $message = $payload['message'] ?? 'Request successful.';
+                $payload['success'] = true;
+                $payload['message'] = is_string($message) && trim($message) !== ''
+                    ? $message
+                    : 'Request successful.';
+                $payload['errors'] = (object) [];
+                $response->setData($payload);
+            }
+
             return $response;
         }
 
@@ -25,12 +47,12 @@ class NormalizeApiErrorResponse
             ? 'Internal server error.'
             : ($original['message'] ?? Response::$statusTexts[$status] ?? 'Request failed.');
 
-        if (!is_string($message) || trim($message) === '') {
+        if (! is_string($message) || trim($message) === '') {
             $message = Response::$statusTexts[$status] ?? 'Request failed.';
         }
 
         $errors = $status >= 500 ? (object) [] : ($original['errors'] ?? (object) []);
-        if (!is_array($errors) && !is_object($errors)) {
+        if (! is_array($errors) && ! is_object($errors)) {
             $errors = (object) [];
         }
 

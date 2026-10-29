@@ -3,25 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\Application;
+use App\Http\Resources\ApplicationResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class NgoApplicationController extends Controller
 {
     public function index(Request $request, Project $project)
     {
-        $ngoProfile = $request->user()->ngoProfile;
-
-        if (!$ngoProfile) {
-            return response()->json([
-                'message' => 'NGO profile not found.',
-            ], 404);
-        }
-
-        if ($project->ngo_profile_id !== $ngoProfile->id) {
-            return response()->json([
-                'message' => 'You are not allowed to view applications for this project.',
-            ], 403);
-        }
+        Gate::authorize('viewForProject', [Application::class, $project]);
 
         $applications = $project->applications()
             ->with([
@@ -35,7 +26,7 @@ class NgoApplicationController extends Controller
 
         return response()->json([
             'message' => 'Applications retrieved successfully.',
-            'data' => $applications,
+            'data' => ApplicationResource::collection($applications)->resolve($request),
         ]);
     }
 }

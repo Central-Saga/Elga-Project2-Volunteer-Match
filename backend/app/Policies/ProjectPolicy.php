@@ -24,6 +24,16 @@ class ProjectPolicy
         return $this->ownsProject($user, $project);
     }
 
+    public function approve(User $user, Project $project): bool
+    {
+        return $user->role === 'admin';
+    }
+
+    public function reject(User $user, Project $project): bool
+    {
+        return $user->role === 'admin';
+    }
+
     private function ownsProject(User $user, Project $project): bool
     {
         return $user->role === 'ngo'

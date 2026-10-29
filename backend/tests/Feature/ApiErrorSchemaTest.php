@@ -2,11 +2,14 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class ApiErrorSchemaTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_validation_error_has_standard_schema(): void
     {
         $response = $this->postJson('/api/auth/login', []);
@@ -23,6 +26,21 @@ class ApiErrorSchemaTest extends TestCase
                     'password',
                 ],
             ]);
+    }
+
+    public function test_successful_api_responses_have_standard_schema_on_versioned_and_legacy_paths(): void
+    {
+        foreach (['/api/v1/campuses', '/api/campuses'] as $path) {
+            $this->getJson($path)
+                ->assertOk()
+                ->assertJsonPath('success', true)
+                ->assertJsonStructure([
+                    'success',
+                    'message',
+                    'data',
+                    'errors',
+                ]);
+        }
     }
 
     public function test_server_error_hides_internal_details(): void

@@ -3,13 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class AdminUserController extends Controller
 {
     public function index(): JsonResponse
     {
+        Gate::authorize('viewAny', User::class);
+
         $users = User::query()
             ->with([
                 'studentProfile',
@@ -21,7 +25,7 @@ class AdminUserController extends Controller
 
         return response()->json([
             'message' => 'Users retrieved successfully.',
-            'data' => $users,
+            'data' => UserResource::collection($users)->resolve(request()),
         ]);
     }
 
@@ -29,6 +33,8 @@ class AdminUserController extends Controller
         Request $request,
         User $user,
     ): JsonResponse {
+        Gate::authorize('manage', $user);
+
         $admin = $request->user();
 
         if ($admin->id === $user->id) {
@@ -46,7 +52,7 @@ class AdminUserController extends Controller
         if ($user->status === 'suspended') {
             return response()->json([
                 'message' => 'Account is already suspended.',
-                'data' => $user,
+                'data' => (new UserResource($user))->resolve($request),
             ]);
         }
 
@@ -66,7 +72,7 @@ class AdminUserController extends Controller
 
         return response()->json([
             'message' => 'Account suspended successfully.',
-            'data' => $user->fresh(),
+            'data' => (new UserResource($user->fresh()))->resolve($request),
         ]);
     }
 
@@ -74,6 +80,8 @@ class AdminUserController extends Controller
         Request $request,
         User $user,
     ): JsonResponse {
+        Gate::authorize('manage', $user);
+
         if ($user->status === 'deleted') {
             return response()->json([
                 'message' => 'Deleted account cannot be reactivated.',
@@ -83,7 +91,7 @@ class AdminUserController extends Controller
         if ($user->status === 'active') {
             return response()->json([
                 'message' => 'Account is already active.',
-                'data' => $user,
+                'data' => (new UserResource($user))->resolve($request),
             ]);
         }
 
@@ -92,7 +100,7 @@ class AdminUserController extends Controller
 
         return response()->json([
             'message' => 'Account activated successfully.',
-            'data' => $user->fresh(),
+            'data' => (new UserResource($user->fresh()))->resolve($request),
         ]);
     }
 
@@ -100,6 +108,8 @@ class AdminUserController extends Controller
         Request $request,
         User $user,
     ): JsonResponse {
+        Gate::authorize('manage', $user);
+
         $admin = $request->user();
 
         /*
@@ -121,7 +131,7 @@ class AdminUserController extends Controller
         if ($user->status === 'deleted') {
             return response()->json([
                 'message' => 'Account is already deleted.',
-                'data' => $user,
+                'data' => (new UserResource($user))->resolve($request),
             ]);
         }
 
@@ -148,7 +158,7 @@ class AdminUserController extends Controller
 
         return response()->json([
             'message' => 'Account deleted successfully.',
-            'data' => $user->fresh(),
+            'data' => (new UserResource($user->fresh()))->resolve($request),
         ]);
     }
 }

@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     $middleware->alias([
         'role' => \App\Http\Middleware\RoleMiddleware::class,
     ]);
-    $middleware->appendToGroup('api', \App\Http\Middleware\NormalizeApiErrorResponse::class);
+    $middleware->appendToGroup('api', \App\Http\Middleware\NormalizeApiResponse::class);
     })
 
 ->withExceptions(function (Exceptions $exceptions): void {

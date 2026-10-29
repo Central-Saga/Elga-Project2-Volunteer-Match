@@ -7,27 +7,14 @@ use App\Models\Credential;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\Notification;
+use App\Http\Resources\CredentialResource;
+use Illuminate\Support\Facades\Gate;
 
 class NgoCredentialController extends Controller
 {
     public function issue(Request $request, Application $application)
     {
-        $ngoProfile = $request->user()->ngoProfile;
-
-        if (!$ngoProfile) {
-            return response()->json([
-                'message' => 'NGO profile not found.',
-            ], 404);
-        }
-
-        $project = $application->project;
-
-        // Pastikan application berasal dari project milik NGO yang login
-        if ($project->ngo_profile_id !== $ngoProfile->id) {
-            return response()->json([
-                'message' => 'You are not allowed to issue this credential.',
-            ], 403);
-        }
+        Gate::authorize('issueCredential', $application);
 
         // Application harus accepted
         if ($application->status !== 'accepted') {
@@ -85,10 +72,10 @@ class NgoCredentialController extends Controller
 
         return response()->json([
             'message' => 'Credential issued successfully.',
-            'data' => $credential->load([
+            'data' => (new CredentialResource($credential->load([
                 'application.project',
                 'application.studentProfile',
-            ]),
+            ])))->resolve($request),
         ], 201);
     }
 }
