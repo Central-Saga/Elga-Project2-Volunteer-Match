@@ -1,0 +1,41 @@
+FROM php:8.4-apache AS php-base
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libicu-dev libpq-dev \
+    && docker-php-ext-install intl opcache pdo_pgsql \
+    && a2enmod headers rewrite \
+    && sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf \
+    && printf '<Directory /var/www/html/public>\\n    AllowOverride All\\n    Require all granted\\n</Directory>\\n' > /etc/apache2/conf-available/laravel.conf \
+    && a2enconf laravel \
+    && rm -rf /var/lib/apt/lists/*
+
+FROM php-base AS build
+
+COPY --from=composer/composer:2-bin /composer /usr/bin/composer
+
+WORKDIR /var/www/html
+COPY . .
+
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-progress \
+    --prefer-dist \
+    --optimize-autoloader \
+    --classmap-authoritative
+
+FROM php-base AS production
+
+COPY docker/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+COPY --from=build --chown=www-data:www-data /var/www/html /var/www/html
+COPY docker/entrypoint.prod.sh /usr/local/bin/entrypoint
+
+RUN chmod +x /usr/local/bin/entrypoint \
+    && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache
+
+WORKDIR /var/www/html
+EXPOSE 80
+
+ENTRYPOINT ["entrypoint"]
+CMD ["apache2-foreground"]

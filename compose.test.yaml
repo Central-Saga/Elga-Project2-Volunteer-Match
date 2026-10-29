@@ -46,6 +46,15 @@ services:
         composer install --no-interaction --prefer-dist --no-progress
         php artisan test
 
+  frontend-build:
+    profiles:
+      - production-build
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api
+
 volumes:
   test-db-data:
   test-vendor:

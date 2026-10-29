@@ -23,6 +23,7 @@ Volunteer Match adalah platform yang menghubungkan mahasiswa dengan NGO untuk me
 - `backend/` - Laravel REST API
 - `frontend/` - Next.js frontend
 - `compose.yaml` - Development services
+- `compose.prod.yaml` - Production services
 - `compose.test.yaml` - Backend test environment
 - `DOCKER_SETUP.md` - Panduan Docker
 
@@ -71,6 +72,24 @@ Pada startup pertama, service menyiapkan dependencies, environment backend, dan 
 `docker compose down`
 
 Perintah tersebut tidak menghapus volume database. Hindari `docker compose down -v` kecuali benar-benar ingin menghapus data lokal.
+
+### Menjalankan mode produksi
+
+Salin `.env.prod.example` menjadi `.env.prod`, lalu isi `APP_KEY` dan `DB_PASSWORD` dengan nilai rahasia yang kuat. Buat key Laravel dengan:
+
+`docker run --rm php:8.4-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"`
+
+Atur `APP_URL`, `CORS_ALLOWED_ORIGINS`, dan `NEXT_PUBLIC_API_URL` sesuai domain publik deployment. `NEXT_PUBLIC_API_URL` dimasukkan ke bundle browser pada saat build.
+
+Bangun dan jalankan stack produksi secara terpisah dari Compose development:
+
+`docker compose --env-file .env.prod -f compose.prod.yaml up -d --build`
+
+Stack ini membuat build Next.js production dan menjalankannya melalui `npm start`, menggunakan Apache/PHP dengan OPcache serta optimasi Laravel, dan menetapkan `APP_ENV=production` serta `APP_DEBUG=false`. Frontend dan backend memiliki healthcheck masing-masing. Gunakan HTTPS dan reverse proxy/TLS sebelum mengekspos layanan ke internet.
+
+Untuk hanya menguji build frontend production tanpa menjalankan stack produksi:
+
+`docker compose -f compose.test.yaml --profile production-build build frontend-build`
 
 ## Environment Configuration
 
@@ -136,6 +155,7 @@ Pengujian berhasil apabila command selesai dengan exit code 0.
 ## Dokumentasi Tambahan
 
 - [Docker Setup](DOCKER_SETUP.md)
+- [Production Compose](compose.prod.yaml)
 - [Backend Environment](backend/.env.example)
 - [Frontend Environment](frontend/.env.example)
 
