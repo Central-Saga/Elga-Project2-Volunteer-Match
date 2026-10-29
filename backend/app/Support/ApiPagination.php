@@ -2,9 +2,9 @@
 
 namespace App\Support;
 
+use App\Http\Requests\PaginationRequest;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 class ApiPagination
@@ -13,12 +13,9 @@ class ApiPagination
      * Existing clients receive the complete list. Pagination is enabled
      * when the caller supplies page or per_page.
      */
-    private static function options(Request $request): array
+    private static function options(PaginationRequest $request): array
     {
-        $values = $request->validate([
-            'page' => ['sometimes', 'integer', 'min:1'],
-            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
-        ]);
+        $values = $request->validated();
 
         return [
             $request->exists('page') || $request->exists('per_page'),
@@ -27,7 +24,7 @@ class ApiPagination
         ];
     }
 
-    public static function collection(Request $request, Collection $items): array
+    public static function collection(PaginationRequest $request, Collection $items): array
     {
         [$enabled, $page, $perPage] = self::options($request);
         $total = $items->count();
@@ -52,7 +49,7 @@ class ApiPagination
         ];
     }
 
-    public static function query(Request $request, Builder|Relation $query): array
+    public static function query(PaginationRequest $request, Builder|Relation $query): array
     {
         [$enabled, $page, $perPage] = self::options($request);
 

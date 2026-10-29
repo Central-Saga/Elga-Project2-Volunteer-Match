@@ -53,7 +53,8 @@ Pada startup pertama, service menyiapkan dependencies, environment backend, dan 
 | Service | URL |
 | --- | --- |
 | Frontend | http://localhost:3000 |
-| Backend API | http://localhost:8000/api |
+| Backend API (legacy) | http://localhost:8000/api |
+| Backend API (versioned) | http://localhost:8000/api/v1 |
 | Health check | http://localhost:8000/up |
 | PostgreSQL | localhost:5433 |
 
@@ -77,6 +78,7 @@ Perintah tersebut tidak menghapus volume database. Hindari `docker compose down 
 - Frontend menggunakan `frontend/.env.example`.
 - `NEXT_PUBLIC_API_URL` menentukan URL Laravel API.
 - `CORS_ALLOWED_ORIGINS` menentukan origin frontend yang diizinkan.
+- Respons JSON API menggunakan `success`, `message`, `data`, dan `errors`; endpoint `/api` tetap tersedia untuk kompatibilitas klien lama.
 - Jangan commit `.env`, password, token, atau kredensial asli.
 
 Konfigurasi dalam Docker Compose ditujukan untuk development lokal, bukan production tanpa pengamanan tambahan.

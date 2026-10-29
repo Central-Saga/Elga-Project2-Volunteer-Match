@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Credential;
-use Illuminate\Http\Request;
 use App\Models\Notification;
+use App\Http\Requests\RevokeCredentialRequest;
+use App\Http\Resources\CredentialResource;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Http\Request;
 
 class AdminCredentialController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $credentials = Credential::with([
             'application.project',
@@ -19,12 +22,14 @@ class AdminCredentialController extends Controller
 
         return response()->json([
             'message' => 'Credentials retrieved successfully.',
-            'data' => $credentials,
+            'data' => CredentialResource::collection($credentials)->resolve($request),
         ]);
     }
 
-    public function revoke(Request $request, Credential $credential)
+    public function revoke(RevokeCredentialRequest $request, Credential $credential)
     {
+        Gate::authorize('revoke', $credential);
+
         if ($credential->status === 'revoked') {
             return response()->json([
                 'message' => 'Credential has already been revoked.',
@@ -32,14 +37,7 @@ class AdminCredentialController extends Controller
             ], 409);
         }
 
-        $validated = $request->validate([
-            'revocation_reason' => [
-                'required',
-                'string',
-                'min:5',
-                'max:2000',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $credential->update([
             'status' => 'revoked',
@@ -68,7 +66,7 @@ class AdminCredentialController extends Controller
 
         return response()->json([
             'message' => 'Credential revoked successfully.',
-            'data' => $credential->fresh(),
+            'data' => (new CredentialResource($credential->fresh()))->resolve($request),
         ]);
     }
 }

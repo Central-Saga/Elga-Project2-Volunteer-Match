@@ -2,11 +2,14 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class ApiDirectErrorSchemaTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_invalid_credentials_from_controller_have_standard_schema(): void
     {
         $this->postJson('/api/auth/login', [

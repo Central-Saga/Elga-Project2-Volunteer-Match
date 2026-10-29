@@ -4,13 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\StudentProfile;
+use App\Http\Requests\PaginationRequest;
+use App\Http\Resources\ProjectResource;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Support\ApiPagination;
 
 class StudentProjectController extends Controller
 {
-    public function index(Request $request)
+    public function index(PaginationRequest $request)
     {
         $studentProfile = StudentProfile::where(
             'user_id',
@@ -46,6 +48,7 @@ class StudentProjectController extends Controller
             ->values();
 
         $paginated = ApiPagination::collection($request, $projects);
+        $paginated['data'] = ProjectResource::collection($paginated['data'])->resolve($request);
 
         return response()->json([
             'message' => 'Published projects retrieved successfully.',
@@ -90,7 +93,7 @@ class StudentProjectController extends Controller
 
         return response()->json([
             'message' => 'Project retrieved successfully.',
-            'data' => $project,
+            'data' => (new ProjectResource($project))->resolve($request),
         ]);
     }
 

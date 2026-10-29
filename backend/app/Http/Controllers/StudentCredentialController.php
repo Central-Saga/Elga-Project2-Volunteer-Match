@@ -3,26 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Application;
+use App\Http\Resources\CredentialResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class StudentCredentialController extends Controller
 {
     public function show(Request $request, Application $application)
     {
-        $studentProfile = $request->user()->studentProfile;
-
-        if (!$studentProfile) {
-            return response()->json([
-                'message' => 'Student profile not found.',
-            ], 404);
-        }
-
-        // Pastikan application memang milik student yang sedang login
-        if ($application->student_profile_id !== $studentProfile->id) {
-            return response()->json([
-                'message' => 'You are not allowed to view this credential.',
-            ], 403);
-        }
+        Gate::authorize('viewCredential', $application);
 
         $credential = $application->credential;
 
@@ -34,9 +23,9 @@ class StudentCredentialController extends Controller
 
         return response()->json([
             'message' => 'Credential retrieved successfully.',
-            'data' => $credential->load([
+            'data' => (new CredentialResource($credential->load([
                 'application.project',
-            ]),
+            ])))->resolve($request),
         ]);
     }
 }

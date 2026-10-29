@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notification;
+use App\Http\Resources\NotificationResource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class NotificationController extends Controller
 {
@@ -18,7 +20,7 @@ class NotificationController extends Controller
 
         return response()->json([
             'message' => 'Notifications retrieved successfully.',
-            'data' => $notifications,
+            'data' => NotificationResource::collection($notifications)->resolve($request),
             'meta' => [
                 'unread_count' => $notifications
                     ->where('is_read', false)
@@ -31,14 +33,7 @@ class NotificationController extends Controller
         Request $request,
         Notification $notification
     ) {
-        if (
-            $notification->user_id !==
-            $request->user()->id
-        ) {
-            return response()->json([
-                'message' => 'You are not allowed to access this notification.',
-            ], 403);
-        }
+        Gate::authorize('update', $notification);
 
         if (!$notification->is_read) {
             $notification->update([
@@ -49,7 +44,7 @@ class NotificationController extends Controller
 
         return response()->json([
             'message' => 'Notification marked as read.',
-            'data' => $notification->fresh(),
+            'data' => (new NotificationResource($notification->fresh()))->resolve($request),
         ]);
     }
 

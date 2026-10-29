@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Credential;
+use App\Http\Requests\VolunteerActivityReportRequest;
+use App\Http\Resources\CredentialResource;
 use Illuminate\Http\Request;
 
 
@@ -34,11 +36,11 @@ class CampusCredentialReportController extends Controller
 
         return response()->json([
             'message' => 'Campus credential report retrieved successfully.',
-            'data' => $credentials,
+            'data' => CredentialResource::collection($credentials)->resolve($request),
         ]);
     }
 
-    public function volunteerActivities(Request $request)
+    public function volunteerActivities(VolunteerActivityReportRequest $request)
 {
     $campusProfile = $request->user()->campusProfile;
 
@@ -48,11 +50,7 @@ class CampusCredentialReportController extends Controller
         ], 404);
     }
 
-    $validated = $request->validate([
-        'from' => ['nullable', 'date'],
-        'to' => ['nullable', 'date', 'after_or_equal:from'],
-        'credential_status' => ['nullable', 'in:active,revoked'],
-    ]);
+    $validated = $request->validated();
 
     $campusId = $campusProfile->campus_id;
 
@@ -131,7 +129,7 @@ class CampusCredentialReportController extends Controller
     ]);
 }
 
-public function exportVolunteerActivities(Request $request)
+public function exportVolunteerActivities(VolunteerActivityReportRequest $request)
 {
     $campusProfile = $request->user()->campusProfile;
 
@@ -141,11 +139,7 @@ public function exportVolunteerActivities(Request $request)
         ], 404);
     }
 
-    $validated = $request->validate([
-        'from' => ['nullable', 'date'],
-        'to' => ['nullable', 'date', 'after_or_equal:from'],
-        'credential_status' => ['nullable', 'in:active,revoked'],
-    ]);
+    $validated = $request->validated();
 
     $campusId = $campusProfile->campus_id;
 

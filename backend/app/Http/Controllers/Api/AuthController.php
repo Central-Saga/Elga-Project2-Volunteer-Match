@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\DeleteAccountRequest;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
+use App\Http\Resources\UserResource;
 use App\Models\StudentProfile;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -12,68 +16,9 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function register(Request $request): JsonResponse
+    public function register(RegisterRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'email' => [
-                'required',
-                'string',
-                'email',
-                'max:255',
-                'unique:users,email',
-            ],
-
-            'password' => [
-                'required',
-                'string',
-                'min:8',
-                'confirmed',
-            ],
-
-            'role' => [
-                'required',
-                'string',
-                'in:student,ngo',
-            ],
-
-            /*
-            |--------------------------------------------------------------------------
-            | Student-only fields
-            |--------------------------------------------------------------------------
-            |
-            | Field ini wajib hanya jika role = student.
-            | Untuk NGO, field ini boleh tidak dikirim.
-            |
-            */
-
-            'campus_id' => [
-                'required_if:role,student',
-                'nullable',
-                'integer',
-                'exists:campuses,id',
-            ],
-
-            'nim' => [
-                'required_if:role,student',
-                'nullable',
-                'string',
-                'max:100',
-                'unique:student_profiles,nim',
-            ],
-
-            'study_program' => [
-                'required_if:role,student',
-                'nullable',
-                'string',
-                'max:255',
-            ],
-        ]);
+        $validated = $request->validated();
 
         [$user, $token] = DB::transaction(function () use ($validated) {
             /*
@@ -145,24 +90,14 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Registration successful.',
-            'user' => $user,
+            'user' => (new UserResource($user))->resolve($request),
             'token' => $token,
         ], 201);
     }
 
-    public function login(Request $request): JsonResponse
+    public function login(LoginRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'email' => [
-                'required',
-                'email',
-            ],
-
-            'password' => [
-                'required',
-                'string',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $user = User::where(
             'email',
@@ -199,7 +134,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login successful.',
-            'user' => $user,
+            'user' => (new UserResource($user))->resolve($request),
             'token' => $token,
         ]);
     }
@@ -207,7 +142,7 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return response()->json([
-            'user' => $request->user(),
+            'user' => (new UserResource($request->user()))->resolve($request),
         ]);
     }
 
@@ -223,15 +158,9 @@ class AuthController extends Controller
         ]);
     }
 
-    public function deleteAccount(
-        Request $request,
-    ): JsonResponse {
-        $validated = $request->validate([
-            'password' => [
-                'required',
-                'string',
-            ],
-        ]);
+    public function deleteAccount(DeleteAccountRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
 
         $user = $request->user();
 

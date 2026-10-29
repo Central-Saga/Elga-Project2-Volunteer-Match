@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateNgoProfileRequest;
+use App\Http\Resources\NgoProfileResource;
 use App\Models\NgoProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,56 +19,13 @@ class NgoProfileController extends Controller
         )->first();
 
         return response()->json([
-            'profile' => $profile,
+            'profile' => $profile ? (new NgoProfileResource($profile))->resolve($request) : null,
         ]);
     }
 
-    public function update(Request $request): JsonResponse
+    public function update(UpdateNgoProfileRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'organization_name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'description' => [
-                'nullable',
-                'string',
-            ],
-
-            'focus_areas' => [
-                'nullable',
-                'array',
-            ],
-
-            'focus_areas.*' => [
-                'string',
-                'max:100',
-            ],
-
-            'contact_email' => [
-                'nullable',
-                'email',
-                'max:255',
-            ],
-
-            'contact_phone' => [
-                'nullable',
-                'string',
-                'max:30',
-            ],
-
-            'address' => [
-                'nullable',
-                'string',
-            ],
-
-            'risk_level' => [
-                'nullable',
-                'in:low,medium,high',
-            ],
-        ]);
+        $validated = $request->validated();
 
         $profile = NgoProfile::updateOrCreate(
             [
@@ -77,7 +36,7 @@ class NgoProfileController extends Controller
 
         return response()->json([
             'message' => 'NGO profile saved successfully.',
-            'profile' => $profile,
+            'profile' => (new NgoProfileResource($profile))->resolve($request),
         ]);
     }
 }
